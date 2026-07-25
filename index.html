@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LV-00</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #2e2f31;
+  color: #f4ede3;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  padding: 2rem 3rem;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.active { display: flex; }
+
+/* ========== MENU ========== */
+#screen-menu {
+  justify-content: center;
+  align-items: flex-start;
+}
+.menu-items { display: flex; flex-direction: column; gap: 0.8rem; }
+.menu-item {
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  user-select: none;
+  white-space: pre;
+  padding: 0.2rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.menu-item.selected::before { content: '> '; }
+.menu-item:not(.selected)::before { content: '  '; }
+
+/* ========== READ SCREEN ========== */
+#screen-read {
+  justify-content: space-between;
+}
+.read-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.read-body {
+  flex: 1;
+  overflow: hidden;
+}
+.read-chapter {
+  letter-spacing: 0.15em;
+  margin-bottom: 1.5rem;
+}
+.read-poem {
+  line-height: 2.2;
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+}
+.read-task {
+  line-height: 2;
+  white-space: pre-wrap;
+}
+.read-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.read-nav .nav-btn {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.read-nav .nav-btn:hover { opacity: 0.7; }
+
+/* ========== SELECT SCREEN ========== */
+#screen-select {
+  flex-direction: column;
+}
+#select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+#select-list > div {
+  padding: 0.3rem 0;
+  min-height: 2.4rem;
+  display: flex;
+  align-items: center;
+}
+
+/* ========== SOLVE / LAB SCREEN ========== */
+#screen-solve, #screen-lab {
+  flex-direction: column;
+}
+.solve-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.editor-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+textarea.code-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f4ede3;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 16px;
+  line-height: 1.8;
+  resize: none;
+  flex: 1;
+  min-height: 60px;
+  caret-color: #f4ede3;
+  overflow-y: auto;
+  padding: 0.3rem 0;
+}
+textarea.code-input::placeholder {
+  color: #888;
+  opacity: 0.6;
+  font-family: 'Noto Serif JP', serif;
+}
+.run-btn {
+  margin-top: 1rem;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.15em;
+  width: fit-content;
+  flex-shrink: 0;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.run-btn:hover { opacity: 0.7; }
+.log-area {
+  margin-top: 1rem;
+  white-space: pre-wrap;
+  line-height: 1.9;
+  font-size: 16px;
+  flex-shrink: 0;
+  max-height: 25vh;
+  overflow-y: auto;
+}
+.back-from-solve {
+  cursor: pointer;
+  user-select: none;
+  margin-top: 0.8rem;
+  width: fit-content;
+  flex-shrink: 0;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.back-from-solve:hover { opacity: 0.7; }
+
+#solve-chapter-label {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.2rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+#solve-chapter-label:hover { opacity: 0.7; }
+
+/* ========== SAMPLES SCREEN ========== */
+#screen-samples {
+  flex-direction: column;
+}
+.samples-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sample-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.sample-tab {
+  cursor: pointer;
+  user-select: none;
+  white-space: pre;
+  padding: 0.2rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.sample-tab.selected::before { content: '> '; }
+.sample-tab:not(.selected)::before { content: '  '; }
+.sample-code {
+  white-space: pre;
+  line-height: 1.9;
+  font-size: 16px;
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+.sample-run-btn {
+  margin-top: 1rem;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.15em;
+  width: fit-content;
+  flex-shrink: 0;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.sample-run-btn:hover { opacity: 0.7; }
+.sample-log {
+  margin-top: 1rem;
+  white-space: pre-wrap;
+  line-height: 1.9;
+  font-size: 16px;
+  flex-shrink: 0;
+  max-height: 15vh;
+  overflow: auto;
+}
+.back-btn {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.back-btn:hover { opacity: 0.7; }
+
+/* ========== SETTINGS SCREEN ========== */
+#screen-settings {
+  justify-content: center;
+  align-items: flex-start;
+}
+.settings-title {
+  letter-spacing: 0.3em;
+  margin-bottom: 2rem;
+}
+.settings-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.settings-label {
+  width: 6rem;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+.vol-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 140px;
+  height: 2px;
+  background: #f4ede3;
+  outline: none;
+  cursor: pointer;
+}
+.vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f4ede3;
+  cursor: pointer;
+}
+.vol-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f4ede3;
+  border: none;
+  cursor: pointer;
+}
+.vol-value {
+  width: 2.5rem;
+  text-align: right;
+  letter-spacing: 0.05em;
+}
+.settings-back {
+  margin-top: 2rem;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.1em;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.settings-back:hover { opacity: 0.7; }
+.delete-save-btn {
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+}
+.delete-save-btn:hover { opacity: 1; }
+.fullscreen-btn {
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  padding: 0.3rem 0;
+  min-height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+}
+.fullscreen-btn:hover { opacity: 1; }
+
+/* ========== CUSTOM DIALOG ========== */
+#dialog-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+#dialog-overlay.active {
+  display: flex;
+}
+.dialog-box {
+  background: #2e2f31;
+  padding: 2rem 2.5rem;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+}
+.dialog-box .dialog-message {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 1.8rem;
+  letter-spacing: 0.05em;
+}
+.dialog-box .dialog-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+}
+.dialog-box .dialog-btn {
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.1em;
+  background: transparent;
+  color: #f4ede3;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 1rem;
+  transition: opacity 0.2s;
+  padding: 0.2rem 0;
+  border: none;
+}
+.dialog-box .dialog-btn:hover {
+  opacity: 0.6;
+}
+.dialog-btn.hidden {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .screen { padding: 0.8rem 1rem; }
+  #screen-menu { padding-top: 0.5rem; }
+  #screen-menu > div:nth-child(2) { margin-bottom: 1.5rem !important; }
+  .menu-items { gap: 0.4rem; }
+  .menu-item { min-height: 2.4rem; font-size: 16px; }
+  .read-top { margin-bottom: 0.8rem; }
+  .read-chapter { margin-bottom: 0.8rem; }
+  .read-poem { margin-bottom: 0.8rem; }
+  .read-nav { gap: 0.8rem; margin-top: 0.8rem; }
+  .read-nav .nav-btn { min-height: 2.4rem; padding: 0.2rem 0; }
+  #select-list > div { min-height: 2.4rem; padding: 0.2rem 0; }
+  .solve-top { margin-bottom: 0.6rem; }
+  textarea.code-input { min-height: 50px; padding: 0.2rem 0; }
+  .run-btn { margin-top: 0.6rem; min-height: 2.4rem; }
+  .log-area { margin-top: 0.6rem; max-height: 20vh; }
+  .back-from-solve { min-height: 2.4rem; margin-top: 0.6rem; }
+  #solve-chapter-label { min-height: 2.4rem; }
+  .samples-top { margin-bottom: 0.6rem; }
+  .sample-tabs { gap: 0.6rem; margin-bottom: 0.6rem; }
+  .sample-tab { min-height: 2.4rem; }
+  .sample-run-btn { margin-top: 0.6rem; min-height: 2.4rem; }
+  .sample-log { margin-top: 0.6rem; max-height: 12vh; }
+  .back-btn { min-height: 2.4rem; }
+  .settings-title { margin-bottom: 1.2rem; }
+  .settings-items { gap: 0.8rem; }
+  .settings-row { gap: 0.6rem; }
+  .settings-label { width: 4.5rem; }
+  .vol-slider { width: 100px; }
+  .vol-value { width: 2rem; }
+  .settings-back { min-height: 2.4rem; margin-top: 1.2rem; }
+  .delete-save-btn { min-height: 2.4rem; }
+  .fullscreen-btn { min-height: 2.4rem; }
+  .dialog-box { padding: 1.5rem 1.5rem; }
+  .dialog-box .dialog-message { font-size: 1rem; }
+  .dialog-box .dialog-btn { font-size: 0.95rem; }
+}
+
+@media (max-width: 480px) {
+  .screen { padding: 0.5rem 0.6rem; }
+  #screen-menu { padding-top: 0.3rem; }
+  #screen-menu > div:nth-child(2) { margin-bottom: 1rem !important; }
+  .menu-item { min-height: 2.2rem; font-size: 15px; }
+  .read-nav { gap: 0.6rem; }
+  #select-list > div { min-height: 2.2rem; }
+  .vol-slider { width: 80px; }
+  .settings-label { width: 4rem; }
+  textarea.code-input { min-height: 40px; font-size: 15px; }
+  .log-area { max-height: 18vh; font-size: 15px; }
+  .dialog-box { padding: 1.2rem 1rem; }
+  .dialog-box .dialog-message { font-size: 0.95rem; }
+  .dialog-box .dialog-btn { font-size: 0.9rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="screen-menu" class="screen active">
+  <div style="margin-bottom:0.5rem; letter-spacing:0.5em;">LV-00</div>
+  <div style="margin-bottom:4rem;"></div>
+  <div class="menu-items">
+    <div class="menu-item" data-idx="0">問題を読む</div>
+    <div class="menu-item" data-idx="1">課題を解く</div>
+    <div class="menu-item" data-idx="2">標本を見る</div>
+    <div class="menu-item" data-idx="3">実験</div>
+    <div class="menu-item" data-idx="4">設定</div>
+  </div>
+</div>
+
+<!-- READ -->
+<div id="screen-read" class="screen">
+  <div class="read-top">
+    <span class="back-btn" id="read-back">メニューに戻る</span>
+    <span id="read-page-num"></span>
+  </div>
+  <div class="read-body">
+    <div class="read-chapter" id="read-chapter"></div>
+    <div class="read-poem" id="read-poem"></div>
+    <div class="read-task" id="read-task"></div>
+  </div>
+  <div class="read-nav">
+    <span class="nav-btn" id="read-solve" style="margin-right:auto;">課題を解く</span>
+    <span class="nav-btn" id="read-prev">前へ</span>
+    <span class="nav-btn" id="read-next">次へ</span>
+  </div>
+</div>
+
+<!-- SELECT -->
+<div id="screen-select" class="screen">
+  <div style="margin-bottom:1rem; flex-shrink:0;">
+    <span class="back-btn" id="select-back">メニューに戻る</span>
+  </div>
+  <div id="select-list"></div>
+</div>
+
+<!-- SOLVE -->
+<div id="screen-solve" class="screen">
+  <div class="solve-top">
+    <span class="back-btn" id="solve-back">問題一覧に戻る</span>
+    <span id="solve-chapter-label"></span>
+  </div>
+  <div class="editor-wrap">
+    <textarea id="code-input" class="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder=">ここに入力"></textarea>
+    <div class="run-btn" id="run-btn">実行</div>
+    <div class="log-area" id="log-area"></div>
+    <div class="back-from-solve" id="log-back" style="display:none;">メニューに戻る</div>
+  </div>
+</div>
+
+<!-- LAB -->
+<div id="screen-lab" class="screen">
+  <div class="solve-top">
+    <span class="back-btn" id="lab-back">メニューに戻る</span>
+    <span>実験</span>
+  </div>
+  <div class="editor-wrap">
+    <textarea id="lab-code-input" class="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder=">自由にコードを書いて実行"></textarea>
+    <div class="run-btn" id="lab-run-btn">実行</div>
+    <div class="log-area" id="lab-log-area"></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="screen-settings" class="screen">
+  <div class="settings-title">設定</div>
+  <div class="settings-items">
+    <div class="settings-row">
+      <div class="settings-label">BGM</div>
+      <div class="vol-slider-wrap">
+        <input type="range" class="vol-slider" id="vol-bgm" min="0" max="100" value="50">
+        <span class="vol-value" id="vol-bgm-val">50</span>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">効果音</div>
+      <div class="vol-slider-wrap">
+        <input type="range" class="vol-slider" id="vol-se" min="0" max="100" value="80">
+        <span class="vol-value" id="vol-se-val">80</span>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="delete-save-btn" id="delete-save-btn">セーブデータを削除</span>
+    </div>
+    <div class="settings-row">
+      <span class="fullscreen-btn" id="fullscreen-btn">全画面表示</span>
+    </div>
+  </div>
+  <div class="settings-back" id="settings-back">メニューに戻る</div>
+</div>
+
+<!-- SAMPLES -->
+<div id="screen-samples" class="screen">
+  <div class="samples-top">
+    <span class="back-btn" id="samples-back">メニューに戻る</span>
+  </div>
+  <div class="sample-tabs" id="sample-tabs"></div>
+  <div class="sample-code" id="sample-code-display"></div>
+  <div class="sample-run-btn" id="sample-run-btn">実行</div>
+  <div class="sample-log" id="sample-log"></div>
+</div>
+
+<!-- DIALOG -->
+<div id="dialog-overlay">
+  <div class="dialog-box">
+    <div class="dialog-message" id="dialog-message">メッセージ</div>
+    <div class="dialog-buttons">
+      <span class="dialog-btn" id="dialog-cancel">いいえ</span>
+      <span class="dialog-btn" id="dialog-confirm">はい</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+//  LV-00 INTERPRETER (fixed)
+// =============================================
+class LV00Interpreter {
+  constructor(sourceText) {
+    this.sourceText = sourceText;
+    this.regs  = Object.create(null);
+    this.arrs  = Object.create(null);
+    this.soundLog = [];
+    this.stdout = '';
+    this.steps  = 0;
+    this.MAX_STEPS = 2000000;
+    this.stdinStr = '';
+    this.stdinPos = 0;
+  }
+
+  setStdin(s) { this.stdinStr = s; this.stdinPos = 0; }
+
+  run() {
+    const stmts = this._parse(this.sourceText);
+    this._execBlock(stmts);
+    return { stdout: this.stdout, soundLog: this.soundLog };
+  }
+
+  // ----- 改良したトークナイザ : 行内の { と } を独立したトークンに分割 -----
+  _lex(src) {
+    const lines = src.split('\n');
+    const tokens = [];
+    for (let li = 0; li < lines.length; li++) {
+      let line = lines[li];
+      const ci = line.indexOf('//');
+      if (ci >= 0) line = line.slice(0, ci);
+      line = line.trim();
+      if (!line) continue;
+
+      // 行内の '{' と '}' を区切りとして分割
+      let parts = [];
+      let current = '';
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '{' || ch === '}') {
+          if (current.trim()) parts.push(current.trim());
+          parts.push(ch);
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      if (current.trim()) parts.push(current.trim());
+
+      for (const p of parts) {
+        if (p) tokens.push({ v: p, ln: li + 1 });
+      }
+    }
+    return tokens;
+  }
+
+  _parse(src) {
+    const tokens = this._lex(src);
+    const ctx = { tokens, pos: 0 };
+    const stmts = [];
+    while (ctx.pos < ctx.tokens.length) {
+      stmts.push(this._parseStmt(ctx));
+    }
+    return stmts;
+  }
+
+  _parseStmt(ctx) {
+    const tok = ctx.tokens[ctx.pos++];
+    if (!tok) throw { code: 'SYNTAX', ln: 0 };
+    const { v, ln } = tok;
+
+    if (v === '}') throw { code: 'UNEXPECTED_CLOSE_BRACE', ln };
+
+    if (/^if\s+/.test(v)) {
+      let cond = v.slice(2).trim();
+      let hasOpen = false;
+      if (cond.endsWith('{')) { cond = cond.slice(0, -1).trim(); hasOpen = true; }
+      // 次のトークンが '{' の場合もブロックと見なす（トークナイザが分割した場合）
+      const body = hasOpen ? this._parseBlock(ctx, true, ln) : [this._parseStmt(ctx)];
+      return { type: 'IF', cond, body, ln };
+    }
+
+    if (/^loop\s+/.test(v)) {
+      let expr = v.slice(4).trim();
+      let hasOpen = false;
+      if (expr.endsWith('{')) { expr = expr.slice(0, -1).trim(); hasOpen = true; }
+      const body = hasOpen ? this._parseBlock(ctx, true, ln) : [this._parseStmt(ctx)];
+      return { type: 'LOOP', expr, body, ln };
+    }
+
+    if (/^while\s+/.test(v)) {
+      let cond = v.slice(5).trim();
+      let hasOpen = false;
+      if (cond.endsWith('{')) { cond = cond.slice(0, -1).trim(); hasOpen = true; }
+      const body = hasOpen ? this._parseBlock(ctx, true, ln) : [this._parseStmt(ctx)];
+      return { type: 'WHILE', cond, body, ln };
+    }
+
+    if (v === '{') {
+      return { type: 'BLOCK', body: this._parseBlock(ctx, true, ln), ln };
+    }
+
+    return { type: 'STMT', v, ln };
+  }
+
+  _parseBlock(ctx, expectClosing = false, startLine = 0) {
+    const body = [];
+    let foundClosing = false;
+    while (ctx.pos < ctx.tokens.length) {
+      const tok = ctx.tokens[ctx.pos];
+      if (tok && tok.v === '}') { ctx.pos++; foundClosing = true; break; }
+      const s = this._parseStmt(ctx);
+      if (s.type === 'CLOSE') break;
+      body.push(s);
+    }
+    if (expectClosing && !foundClosing) {
+      throw { code: 'UNCLOSED_BLOCK', ln: startLine };
+    }
+    return body;
+  }
+
+  _execBlock(stmts) {
+    for (const s of stmts) this._execStmt(s);
+  }
+
+  _execStmt(s) {
+    this.steps++;
+    if (this.steps > this.MAX_STEPS) throw { code: 'TIMEOUT' };
+    switch (s.type) {
+      case 'BLOCK': this._execBlock(s.body); break;
+      case 'IF':
+        if (this._eval(s.cond, s.ln) !== 0) this._execBlock(s.body);
+        break;
+      case 'LOOP': {
+        const n = Math.trunc(this._eval(s.expr, s.ln));
+        for (let i = 0; i < n; i++) this._execBlock(s.body);
+        break;
+      }
+      case 'WHILE':
+        while (this._eval(s.cond, s.ln) !== 0) {
+          this.steps++;
+          if (this.steps > this.MAX_STEPS) throw { code: 'TIMEOUT' };
+          this._execBlock(s.body);
+        }
+        break;
+      case 'STMT':
+        this._execLine(s.v, s.ln);
+        break;
+    }
+  }
+
+  _execLine(line, ln) {
+    const m = line.match(/^([a-z][a-z0-9]*)(\[[^\]]*\])?\s*=\s*(.+)$/);
+    if (m) {
+      const varName = m[1];
+      if (varName.length > 1) throw { code: 'LONG_VAR', ln, varName };
+      const idxExpr = m[2] ? m[2].slice(1, -1) : null;
+      const rhs = m[3].trim();
+
+      if (rhs === 'in.str()') {
+        if (idxExpr !== null) throw { code: 'SYNTAX', ln };
+        this.arrs[varName] = this._readStr();
+        return;
+      }
+      if (rhs === 'self()') {
+        if (idxExpr !== null) throw { code: 'SYNTAX', ln };
+        this.arrs[varName] = this._selfArr();
+        return;
+      }
+
+      const val = this._eval(rhs, ln);
+
+      if (idxExpr !== null) {
+        const idx = Math.trunc(this._eval(idxExpr, ln));
+        if (idx < 0) throw { code: 'OUT_OF_BOUNDS', ln };
+        if (!this.arrs[varName]) this.arrs[varName] = [];
+        while (this.arrs[varName].length <= idx) this.arrs[varName].push(0);
+        this.arrs[varName][idx] = val;
+      } else {
+        this.regs[varName] = val;
+      }
+      return;
+    }
+    this._eval(line, ln);
+  }
+
+  _eval(src, ln) {
+    src = src.trim();
+    try {
+      const p = { src, pos: 0, ln };
+      const v = this._parseCompare(p);
+      this._ws(p);
+      if (p.pos < p.src.length) {
+        const ch = p.src[p.pos];
+        if ('=&|^!~@#'.includes(ch)) throw { code: 'INVALID_OPERATOR', ln, op: ch };
+        throw { code: 'SYNTAX', ln };
+      }
+      return v;
+    } catch (e) {
+      if (e && e.code) throw e;
+      throw { code: 'SYNTAX', ln };
+    }
+  }
+
+  _ws(p) {
+    while (p.pos < p.src.length && p.src[p.pos] === ' ') p.pos++;
+  }
+
+  _parseCompare(p) {
+    let left = this._parseAdd(p);
+    this._ws(p);
+    for (const op of ['==','!=','<=','>=','<','>']) {
+      if (p.src.startsWith(op, p.pos)) {
+        p.pos += op.length; this._ws(p);
+        const right = this._parseAdd(p);
+        const r = op==='==' ? left===right : op==='!=' ? left!==right
+                : op==='<'  ? left<right  : op==='>'  ? left>right
+                : op==='<=' ? left<=right : left>=right;
+        return r ? 1 : 0;
+      }
+    }
+    return left;
+  }
+
+  _parseAdd(p) {
+    let v = this._parseMul(p);
+    this._ws(p);
+    while (p.pos < p.src.length && (p.src[p.pos]==='+' || p.src[p.pos]==='-')) {
+      const op = p.src[p.pos++]; this._ws(p);
+      const r = this._parseMul(p);
+      v = op==='+' ? v+r : v-r;
+      this._ws(p);
+    }
+    return v;
+  }
+
+  _parseMul(p) {
+    let v = this._parseUnary(p);
+    this._ws(p);
+    while (p.pos < p.src.length && (p.src[p.pos]==='*'||p.src[p.pos]==='/'||p.src[p.pos]==='%')) {
+      const op = p.src[p.pos++]; this._ws(p);
+      const r = this._parseUnary(p);
+      if ((op==='/'||op==='%') && r===0) throw { code:'DIV_BY_ZERO', ln: p.ln };
+      v = op==='*' ? v*r : op==='/' ? v/r : v%r;
+      this._ws(p);
+    }
+    return v;
+  }
+
+  _parseUnary(p) {
+    this._ws(p);
+    if (p.src[p.pos]==='-') { p.pos++; return -this._parseAtom(p); }
+    return this._parseAtom(p);
+  }
+
+  _parseAtom(p) {
+    this._ws(p);
+    const { src, ln } = p;
+
+    if (p.pos >= src.length) throw { code: 'UNEXPECTED_END', ln };
+
+    if (src[p.pos]==='(') {
+      p.pos++;
+      const v = this._parseCompare(p);
+      this._ws(p);
+      if (p.pos >= src.length || src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++; return v;
+    }
+
+    if (/[0-9]/.test(src[p.pos])) {
+      let s='';
+      while (p.pos<src.length && /[0-9]/.test(src[p.pos])) s+=src[p.pos++];
+      return Number(s);
+    }
+
+    if (src.startsWith('in.num()', p.pos))  { p.pos+=8; return this._readNum(); }
+    if (src.startsWith('in.str()', p.pos))  {
+      p.pos+=8; this._readStr(); return 0;
+    }
+    if (src.startsWith('self()', p.pos))    { p.pos+=6; this._selfArr(); return 0; }
+
+    if (src.startsWith('out.chr(', p.pos)) {
+      p.pos+=8;
+      const v=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      this.stdout += String.fromCharCode(Math.trunc(v));
+      return 0;
+    }
+
+    if (src.startsWith('out.num(', p.pos)) {
+      p.pos+=8;
+      const v=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      this.stdout += Math.trunc(v).toString();
+      return 0;
+    }
+
+    if (src.startsWith('sound(', p.pos)) {
+      p.pos+=6;
+      const freq=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==',') throw { code: 'MISSING_COMMA', ln, near: 'sound()' };
+      p.pos++; this._ws(p);
+      const ms=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      this.soundLog.push({ freq: freq, ms: Math.trunc(ms) });
+      return 0;
+    }
+
+    if (src.startsWith('len(', p.pos)) {
+      p.pos+=4;
+      let name='';
+      while (p.pos<src.length && /[a-z0-9_]/.test(src[p.pos])) name+=src[p.pos++];
+      this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      return (this.arrs[name]||[]).length;
+    }
+
+    if (src.startsWith('out.', p.pos)) {
+      const end = src.indexOf('(', p.pos);
+      const name = end>=0 ? src.slice(p.pos, end) : src.slice(p.pos);
+      throw { code: 'UNKNOWN_COMMAND', ln, name };
+    }
+    if (src.startsWith('in.', p.pos)) {
+      const end = src.indexOf('(', p.pos);
+      const name = end>=0 ? src.slice(p.pos, end) : src.slice(p.pos);
+      throw { code: 'UNKNOWN_COMMAND', ln, name };
+    }
+
+    if (/[a-z_]/.test(src[p.pos])) {
+      let name='';
+      while (p.pos<src.length && /[a-z0-9_]/.test(src[p.pos])) name+=src[p.pos++];
+      if (name.length > 1) {
+        throw { code: 'LONG_VAR', ln: p.ln, varName: name };
+      }
+      this._ws(p);
+      if (src[p.pos]==='[') {
+        p.pos++;
+        const idx=this._parseCompare(p); this._ws(p);
+        if (src[p.pos]!==']') throw { code: 'UNCLOSED_BRACKET', ln };
+        p.pos++;
+        const i=Math.trunc(idx);
+        if (i<0) throw { code:'OUT_OF_BOUNDS', ln };
+        return (this.arrs[name]||[])[i] ?? 0;
+      }
+      return this.regs[name] ?? 0;
+    }
+
+    const ch = src[p.pos];
+    if ('=&|^!~@#'.includes(ch)) throw { code: 'INVALID_OPERATOR', ln, op: ch };
+
+    throw { code:'SYNTAX', ln };
+  }
+
+  _readStr() {
+    let buf='';
+    while (this.stdinPos < this.stdinStr.length) {
+      const ch = this.stdinStr[this.stdinPos++];
+      if (ch==='\n') break;
+      buf+=ch;
+    }
+    const arr=[];
+    for (let i=0;i<buf.length;i++) arr.push(buf.charCodeAt(i));
+    return arr;
+  }
+
+  _readNum() {
+    const s = this.stdinStr;
+    let i = this.stdinPos;
+    while (i<s.length && !/[0-9\-]/.test(s[i])) i++;
+    let num='';
+    if (i<s.length && s[i]==='-') num+=s[i++];
+    while (i<s.length && /[0-9]/.test(s[i])) num+=s[i++];
+    this.stdinPos=i;
+    return num ? Number(num) : 0;
+  }
+
+  _selfArr() {
+    const arr=[];
+    for (let i=0;i<this.sourceText.length;i++) arr.push(this.sourceText.charCodeAt(i));
+    return arr;
+  }
+}
+
+// =============================================
+//  RUNNER
+// =============================================
+function runCode(source, stdin) {
+  const interp = new LV00Interpreter(source);
+  interp.setStdin(stdin);
+  try {
+    const r = interp.run();
+    return { ok:true, stdout:r.stdout, soundLog:r.soundLog, error:null };
+  } catch(e) {
+    let msg;
+    if      (!e)               msg = 'ERR: RUNTIME';
+    else if (e.code==='TIMEOUT')        msg = 'ERR: TIMEOUT';
+    else if (e.code==='DIV_BY_ZERO')    msg = `ERR: DIV BY ZERO AT LINE ${e.ln}`;
+    else if (e.code==='OUT_OF_BOUNDS')  msg = `ERR: OUT OF BOUNDS AT LINE ${e.ln}`;
+    else if (e.code==='LONG_VAR')       msg = `ERR: VARIABLE NAME MUST BE ONE LETTER AT LINE ${e.ln} ("${e.varName}")`;
+    else if (e.code==='UNCLOSED_PAREN') msg = `ERR: UNCLOSED PARENTHESIS AT LINE ${e.ln}`;
+    else if (e.code==='UNCLOSED_BRACKET') msg = `ERR: UNCLOSED BRACKET AT LINE ${e.ln}`;
+    else if (e.code==='MISSING_COMMA')  msg = `ERR: MISSING COMMA AT LINE ${e.ln} (in ${e.near})`;
+    else if (e.code==='UNKNOWN_COMMAND')msg = `ERR: UNKNOWN COMMAND AT LINE ${e.ln} ("${e.name}")`;
+    else if (e.code==='INVALID_OPERATOR') msg = `ERR: INVALID OPERATOR AT LINE ${e.ln} ("${e.op}")`;
+    else if (e.code==='UNEXPECTED_END') msg = `ERR: UNEXPECTED END OF EXPRESSION AT LINE ${e.ln}`;
+    else if (e.code==='SYNTAX')         msg = `ERR: SYNTAX AT LINE ${e.ln}`;
+    else if (e.code==='UNCLOSED_BLOCK') msg = `ERR: UNCLOSED BLOCK (MISSING '}') STARTED AT LINE ${e.ln}`;
+    else if (e.code==='UNEXPECTED_CLOSE_BRACE') msg = `ERR: UNEXPECTED '}' AT LINE ${e.ln}`;
+    else msg = 'ERR: RUNTIME';
+    return { ok:false, stdout:'', soundLog:[], error:msg };
+  }
+}
+
+// =============================================
+//  SOUND PLAYER (Web Audio API)
+// =============================================
+let audioCtx = null;
+let soundTimeouts = [];
+let soundOscillators = [];
+
+function cancelAllSounds() {
+  soundTimeouts.forEach(id => clearTimeout(id));
+  soundTimeouts = [];
+  soundOscillators.forEach(osc => {
+    try { osc.stop(); osc.disconnect(); } catch(e) {}
+  });
+  soundOscillators = [];
+}
+
+function playSounds(soundLog) {
+  if (!soundLog || soundLog.length === 0) return;
+  cancelAllSounds();
+
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  let delay = 0;
+  for (const s of soundLog) {
+    const freq = s.freq;
+    const dur = s.ms;
+    const timeoutId = setTimeout(() => {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        gain.gain.value = 0.15;
+        osc.start();
+        soundOscillators.push(osc);
+        setTimeout(() => {
+          try { osc.stop(); osc.disconnect(); } catch(e) {}
+        }, dur);
+      } catch(e) { /* ignore */ }
+    }, delay);
+    soundTimeouts.push(timeoutId);
+    delay += dur + 50;
+  }
+}
+
+// =============================================
+//  PROBLEMS (全16章)
+// =============================================
+function generateBalancedParentheses(length) {
+  let res = [];
+  let balance = 0;
+  for (let i = 0; i < length; i++) {
+    let remaining = length - i;
+    let options = [];
+    if (balance + 1 <= remaining - 1) options.push('(');
+    if (balance > 0) options.push(')');
+    let pick = options[Math.floor(Math.random() * options.length)];
+    res.push(pick);
+    if (pick === '(') balance++; else balance--;
+  }
+  return res.join('');
+}
+
+// 周波数がオクターブ違い（2^n倍）を許容する判定
+function isFreqMatch(got, exp, tolerance = 0.01) {
+  if (got === 0) return exp === 0;
+  const ratio = got / exp;
+  const n = Math.round(Math.log2(ratio));
+  const expectedRatio = Math.pow(2, n);
+  return Math.abs(ratio - expectedRatio) < tolerance;
+}
+
+const PROBLEMS = [
+  {
+    chapter: '［第一章］　逆転の鏡',
+    poem: 'テーブルの端に置かれたコップが午後の光を反射させている。\n巻き戻せない映画のフィルムのように、正しい過去へ向かう。',
+    task: '5文字の入力を反転させる。',
+    runs: 10,
+    genCase() {
+      const cs='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let s=''; for(let i=0;i<5;i++) s+=cs[Math.floor(Math.random()*cs.length)];
+      return { input:s+'\n', expected:s.split('').reverse().join('') };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第二章］　丸められた数字',
+    poem: '数字の殴り書きされた紙を丸めて捨てる。\nさて、丸くなった鉛筆の芯を眺めて何を思う？',
+    task: '入力された値のlog2の値を3桁の精度で求める。\n小数点は不要。',
+    runs: 10,
+    genCase() {
+      const x=Math.floor(Math.random()*9000)+1000;
+      return { input:x+'\n', expected:Math.round(Math.log2(x)*1000), x };
+    },
+    judge(got,expected){
+      const v=parseInt(got.trim(),10);
+      return !isNaN(v) && Math.abs(v-expected)<=1;
+    }
+  },
+  {
+    chapter: '［第三章］　触れられない数字',
+    poem: '時計の針が重なる直前の空白。\n誰にも触れられない数字は夜になる。',
+    task: '入力された値番目の素数を出力する。',
+    runs: 10,
+    genCase() {
+      const x=Math.floor(Math.random()*900)+100;
+      function nthPrime(n){
+        const p=[];let c=2;
+        while(p.length<n){
+          let ok=true;
+          for(const q of p){if(q*q>c)break;if(c%q===0){ok=false;break;}}
+          if(ok)p.push(c);c++;
+        }
+        return p[n-1];
+      }
+      return { input:x+'\n', expected:String(nthPrime(x)) };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第四章］　繰り返しの剥奪',
+    poem: '既に読んだページをもう一度めくる。\n繰り返しには意味がない。',
+    task: '重複する文字を取り除く。',
+    runs: 10,
+    genCase() {
+      const al='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let s=''; for(let i=0;i<5;i++) s+=al[Math.floor(Math.random()*26)];
+      const freq={};
+      for(const c of s) freq[c]=(freq[c]||0)+1;
+      let expected='';
+      for(const c of s) if(freq[c]===1) expected+=c;
+      return { input:s+'\n', expected };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第五章］　あるかないかの二択',
+    poem: '電波の届かない高架下で信号の点滅を数える。\n世界はあるかないかの二択だった。',
+    task: '入力された文字列は二つの数で表す。',
+    runs: 10,
+    genCase() {
+      const x=Math.floor(Math.random()*9000)+1000;
+      return { input:x+'\n', expected:x.toString(2) };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第六章］　乱雑な列',
+    poem: '散らかった部屋に古びた本。\n背の低い順に並べても意味はない。',
+    task: '乱雑な列を整理する。',
+    runs: 10,
+    genCase() {
+      const arr=[1,2,3,4,5,6,7,8,9,10].sort(()=>Math.random()-0.5);
+      return { input:arr.join('\n')+'\n', expected:'1 2 3 4 5 6 7 8 9 10', arr };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第七章］　振動する鍵盤',
+    poem: 'ピアノの鍵盤に指を置く。\n振動する。',
+    task: '入力がCならドの音を。',
+    runs: 1,
+    genCase() {
+      const notes=['C','D','E','F','G','A','B'];
+      const freqs={C:261.63,D:293.66,E:329.63,F:349.23,G:392.00,A:440.00,B:493.88};
+      const seq=notes.slice().sort(()=>Math.random()-0.5);
+      return { input:seq.join('')+'\n', expected:seq, freqs };
+    },
+    judge(got, expected, tc, soundLog) {
+      if (soundLog.length !== tc.expected.length) return false;
+      for (let i = 0; i < tc.expected.length; i++) {
+        const expFreq = tc.freqs[tc.expected[i]];
+        const gotFreq = soundLog[i].freq;
+        if (!isFreqMatch(gotFreq, expFreq)) return false;
+      }
+      return true;
+    }
+  },
+  {
+    chapter: '［第八章］　自己複製',
+    poem: '自己複製',
+    task: '',
+    runs: 1,
+    genCase(){ return { input:'', expected:'__QUINE__' }; },
+    judge(got,_exp,_tc,_sl,source){
+      if (source.trim() === '') return false;
+      return got.trim()===source.trim();
+    }
+  },
+  {
+    chapter: '［第九章］　分かたれた影',
+    poem: '光はいくつか影になる。\n大きいものにはやはり意味があった。',
+    task: '数値を分解して大きいものを見る。',
+    runs: 10,
+    genCase() {
+      const n = Math.floor(Math.random() * 90000) + 10000;
+      function maxPrimeFactor(x) {
+        let max = 1;
+        let num = x;
+        for (let i = 2; i * i <= num; i++) {
+          while (num % i === 0) { max = i; num /= i; }
+        }
+        if (num > 1) max = num;
+        return max;
+      }
+      return { input: n + '\n', expected: String(maxPrimeFactor(n)) };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  },
+  {
+    chapter: '［第十章］　波の詳細',
+    poem: '波を見ていた。\n終わりがない波。',
+    task: '三角形の比を2桁の精度で求める。\n点は不要。',
+    runs: 10,
+    genCase() {
+      const deg = Math.floor(Math.random() * 180) + 1;
+      const rad = deg * Math.PI / 180;
+      const val = Math.round(Math.sin(rad) * 100);
+      return { input: deg + '\n', expected: String(val) };
+    },
+    judge(got, expected) {
+      const v = parseInt(got.trim(), 10);
+      if (isNaN(v)) return false;
+      return Math.abs(v - parseInt(expected, 10)) <= 2;
+    }
+  },
+  {
+    chapter: '［第十一章］　ルート',
+    poem: '道のりは長かった。\nでも、これでもまだ道半ばだ。',
+    task: '面から辺に。',
+    runs: 10,
+    genCase() {
+      const n = Math.floor(Math.random() * 90000) + 10000;
+      const val = Math.round(Math.sqrt(n) * 1000);
+      return { input: n + '\n', expected: String(val) };
+    },
+    judge(got, expected) {
+      const v = parseInt(got.trim(), 10);
+      if (isNaN(v)) return false;
+      return Math.abs(v - parseInt(expected, 10)) <= 1;
+    }
+  },
+  {
+    chapter: '［第十二章］　囲まれること',
+    poem: '海に囲まれた孤島がある。\n囲まれていることは正しいことである。',
+    task: '囲まれていることを評価する。',
+    runs: 10,
+    genCase() {
+      const len = 10;
+      let s;
+      if (Math.random() < 0.5) {
+        s = generateBalancedParentheses(len);
+      } else {
+        s = '';
+        for (let i = 0; i < len; i++) s += Math.random() < 0.5 ? '(' : ')';
+      }
+      function isValid(str) {
+        let bal = 0;
+        for (const ch of str) {
+          if (ch === '(') bal++;
+          else { bal--; if (bal < 0) return false; }
+        }
+        return bal === 0;
+      }
+      return { input: s + '\n', expected: isValid(s) ? '1' : '0' };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  },
+  {
+    chapter: '［第十三章］　分散和音',
+    poem: '久々に鍵盤に手を置いた。\n案外覚えているものだ。',
+    task: 'ACEFACGBDCEGを演奏する。',
+    runs: 1,
+    genCase() {
+      const notes = [
+        { name: 'A', freq: 220.00 },
+        { name: 'C', freq: 261.63 },
+        { name: 'E', freq: 329.63 },
+        { name: 'F', freq: 349.23 },
+        { name: 'A', freq: 220.00 },
+        { name: 'C', freq: 261.63 },
+        { name: 'G', freq: 392.00 },
+        { name: 'B', freq: 493.88 },
+        { name: 'D', freq: 293.66 },
+        { name: 'C', freq: 261.63 },
+        { name: 'E', freq: 329.63 },
+        { name: 'G', freq: 392.00 }
+      ];
+      const ms = 200;
+      return { input: '', expected: notes, ms: ms };
+    },
+    // ★ 時間チェックを完全に削除（周波数のみ判定）
+    judge(got, expected, tc, soundLog) {
+      if (soundLog.length !== tc.expected.length) return false;
+      for (let i = 0; i < tc.expected.length; i++) {
+        const expFreq = tc.expected[i].freq;
+        const gotFreq = soundLog[i].freq;
+        if (!isFreqMatch(gotFreq, expFreq)) return false;
+      }
+      return true;
+    }
+  },
+  {
+    chapter: '［第十四章］　計算機',
+    poem: '同じ作業は心がすり減る。\n簡単なことはわざわざやる意味もない。',
+    task: '計算する。',
+    runs: 10,
+    genCase() {
+      const ops = ['+', '-', '*', '/'];
+      const op1 = ops[Math.floor(Math.random() * ops.length)];
+      const op2 = ops[Math.floor(Math.random() * ops.length)];
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      const c = Math.floor(Math.random() * 9) + 1;
+      const expr = `${a}${op1}${b}${op2}${c}`;
+      const result = Function('"use strict"; return (' + expr + ')')();
+      const expected = String(Math.trunc(result));
+      return { input: expr + '\n', expected: expected };
+    },
+    judge(got, expected) {
+      const g = parseFloat(got.trim());
+      const e = parseFloat(expected);
+      if (isNaN(g) || isNaN(e)) return false;
+      return Math.abs(g - e) < 1e-6;
+    }
+  },
+  {
+    chapter: '［第十五章］　見方の違い',
+    poem: '同じ物でも見る方向で違うものになる。\n違いとは何だろうか。',
+    task: '変換作業',
+    runs: 10,
+    genCase() {
+      const map = {0:6, 1:5, 2:1, 3:4, 4:0, 5:8, 6:3, 7:9, 8:2, 9:7};
+      const num = Math.floor(Math.random() * 10);
+      return { input: num + '\n', expected: String(map[num]) };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  },
+  {
+    chapter: '［第十六章］　自己分析',
+    poem: '自己を見つめる。\n\nどこにあるのか。',
+    task: '',
+    runs: 10,
+    genCase(source) {
+      const len = source.length;
+      if (len === 0) {
+        return { input: 'a\n', expected: '1' };
+      }
+      const idx = Math.floor(Math.random() * len);
+      const ch = source[idx];
+      // その文字が最初に現れる位置（1-indexed）
+      const firstPos = source.indexOf(ch) + 1;
+      return { input: ch + '\n', expected: String(firstPos) };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  }
+];
+
+const SAMPLES = [
+  {
+    name: '01_math',
+    stdin: '',
+    code:
+`a = 12
+b = 5
+
+c = a + b
+d = a * b
+e = a / b
+f = a % b
+
+out.num(c)
+out.chr(32)
+out.num(d)
+out.chr(32)
+out.num(e)
+out.chr(32)
+out.num(f)
+out.chr(10)`
+  },
+  {
+    name: '02_control',
+    stdin: '',
+    code:
+`a = 0
+loop 5 {
+    a = a + 2
+}
+out.num(a)
+out.chr(10)
+
+i = 10
+while i > 0 {
+    if i % 2 == 0 {
+        out.num(i)
+        out.chr(32)
+    }
+    i = i - 1
+}
+out.chr(10)`
+  },
+  {
+    name: '03_string',
+    stdin: 'hello',
+    code:
+`s = in.str()
+n = len(s)
+
+out.num(n)
+out.chr(10)
+
+i = 0
+while i < n {
+    c = s[i]
+    out.chr(c)
+    out.chr(10)
+    i = i + 1
+}`
+  },
+  {
+    name: '04_numbers',
+    stdin: '3\n10\n20\n30',
+    code:
+`n = in.num()
+s = 0
+
+loop n {
+    v = in.num()
+    s = s + v
+}
+
+out.num(s)
+out.chr(10)`
+  },
+  {
+    name: '05_system',
+    stdin: '',
+    code:
+`c = self()
+n = len(c)
+
+out.num(n)
+out.chr(10)
+
+sound(440, 200)
+sound(880, 200)`
+  }
+];
+
+// =============================================
+//  AUDIO (BGM/SE)
+// =============================================
+const bgmAudio = new Audio('bgm.mp3');
+bgmAudio.loop = true;
+bgmAudio.volume = 0.5;
+
+const seAudio = new Audio('se_select.mp3');
+let seVolume = 0.8;
+
+let bgmStarted = false;
+
+function startBgm() {
+  if (!bgmStarted) {
+    bgmStarted = true;
+    setTimeout(()=>{ bgmAudio.play().catch(()=>{}); }, 1000);
+  }
+}
+
+function onFirstInteraction() {
+  startBgm();
+  document.removeEventListener('click', onFirstInteraction);
+  document.removeEventListener('keydown', onFirstInteraction);
+}
+document.addEventListener('click', onFirstInteraction);
+document.addEventListener('keydown', onFirstInteraction);
+
+function playSe() {
+  const s = seAudio.cloneNode();
+  s.volume = seVolume;
+  s.play().catch(()=>{});
+}
+
+// =============================================
+//  UI
+// =============================================
+let currentScreen = 'menu';
+let menuIdx  = 0;
+let readPage = 0;
+let solveIdx = 0;
+let sampleIdx= 0;
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  currentScreen = name;
+}
+
+// ── MENU ─────────────────────────────────────
+const menuItems = document.querySelectorAll('.menu-item');
+function renderMenu(){
+  menuItems.forEach((el,i)=>el.classList.toggle('selected',i===menuIdx));
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('dialog-overlay').classList.contains('active')) return;
+
+  if (currentScreen==='menu') {
+    if (e.key==='ArrowDown'||e.key==='j'){ menuIdx=(menuIdx+1)%5; renderMenu(); playSe(); }
+    else if (e.key==='ArrowUp'||e.key==='k'){ menuIdx=(menuIdx+4)%5; renderMenu(); playSe(); }
+    else if (e.key==='Enter'){ playSe(); menuActivate(); }
+  }
+  if (currentScreen==='read') {
+    if (e.key==='ArrowRight'||e.key==='l') nextPage();
+    else if (e.key==='ArrowLeft'||e.key==='h') prevPage();
+    else if (e.key==='Escape'){ showScreen('menu'); renderMenu(); }
+  }
+});
+
+menuItems.forEach((el,i)=>{
+  el.addEventListener('click',()=>{
+    if(menuIdx===i){ playSe(); menuActivate(); }
+    else { menuIdx=i; renderMenu(); playSe(); }
+  });
+  el.addEventListener('touchstart', (e) => {}, { passive: true });
+});
+
+function menuActivate(){
+  if(menuIdx===0){ readPage=0; renderReadPage(); showScreen('read'); }
+  else if(menuIdx===1){ renderSelect(); showScreen('select'); }
+  else if(menuIdx===2){ sampleIdx=0; renderSamples(); showScreen('samples'); }
+  else if(menuIdx===3){ showScreen('lab'); }
+  else { showScreen('settings'); }
+}
+
+// ── CLEAR STATE ──────────────────────────────
+const CLEAR_KEY = 'lv00_cleared';
+const CODE_KEY = 'lv00_cleared_code';
+const WELCOME_KEY = 'lv00_welcome_shown';
+
+function loadCleared(){ try{ return JSON.parse(localStorage.getItem(CLEAR_KEY))||[]; }catch(e){ return []; } }
+function saveCleared(arr){ localStorage.setItem(CLEAR_KEY, JSON.stringify(arr)); }
+function markCleared(idx){ const a=loadCleared(); if(!a.includes(idx)){ a.push(idx); saveCleared(a); } }
+function isCleared(idx){ return loadCleared().includes(idx); }
+
+function loadClearedCode(){ try{ return JSON.parse(localStorage.getItem(CODE_KEY))||{}; }catch(e){ return {}; } }
+function saveClearedCode(obj){ localStorage.setItem(CODE_KEY, JSON.stringify(obj)); }
+function getClearedCode(idx){ const o=loadClearedCode(); return o[idx] || ''; }
+function setClearedCode(idx, code){ const o=loadClearedCode(); o[idx]=code; saveClearedCode(o); }
+
+// ── DIALOG ───────────────────────────────────
+let dialogResolve = null;
+function showDialog(message, type) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('dialog-overlay');
+    const msgEl = document.getElementById('dialog-message');
+    const cancelBtn = document.getElementById('dialog-cancel');
+    const confirmBtn = document.getElementById('dialog-confirm');
+
+    msgEl.textContent = message;
+
+    if (type === 'ok') {
+      cancelBtn.classList.add('hidden');
+      confirmBtn.textContent = 'はい';
+    } else {
+      cancelBtn.classList.remove('hidden');
+      confirmBtn.textContent = 'はい';
+    }
+
+    overlay.classList.add('active');
+    dialogResolve = resolve;
+  });
+}
+
+document.getElementById('dialog-confirm').addEventListener('click', () => {
+  document.getElementById('dialog-overlay').classList.remove('active');
+  if (dialogResolve) { dialogResolve(true); dialogResolve = null; }
+});
+document.getElementById('dialog-cancel').addEventListener('click', () => {
+  document.getElementById('dialog-overlay').classList.remove('active');
+  if (dialogResolve) { dialogResolve(false); dialogResolve = null; }
+});
+
+// ── WELCOME DIALOG ──────────────────────────
+function showWelcomeIfNeeded() {
+  if (!localStorage.getItem(WELCOME_KEY)) {
+    showDialog('標本からLV-00の構造を理解して課題を解きましょう', 'ok').then(() => {
+      localStorage.setItem(WELCOME_KEY, 'true');
+    });
+  }
+}
+
+// ── DELETE SAVE ──────────────────────────────
+function deleteAllSaveData(){
+  showDialog('セーブデータを削除しますか？', 'confirm').then((confirmed) => {
+    if (confirmed) {
+      localStorage.removeItem(CLEAR_KEY);
+      localStorage.removeItem(CODE_KEY);
+      localStorage.removeItem(WELCOME_KEY);
+      location.reload();
+    }
+  });
+}
+
+function chapterLabel(i){ return (isCleared(i)?'✓ ':'  ')+PROBLEMS[i].chapter; }
+
+// ── SELECT ───────────────────────────────────
+function renderSelect(){
+  const list=document.getElementById('select-list');
+  list.innerHTML='';
+  PROBLEMS.forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.style.cssText='cursor:pointer;user-select:none;white-space:pre;margin-bottom:0.3rem;';
+    el.textContent=chapterLabel(i);
+    el.addEventListener('mouseenter',()=>{ el.textContent='> '+p.chapter; });
+    el.addEventListener('mouseleave',()=>{ el.textContent=chapterLabel(i); });
+    el.addEventListener('click',()=>{ playSe(); solveIdx=i; renderSolve(); showScreen('solve'); });
+    el.addEventListener('touchstart', (e) => {}, { passive: true });
+    list.appendChild(el);
+  });
+}
+document.getElementById('select-back').addEventListener('click',()=>{ playSe(); showScreen('menu'); renderMenu(); });
+
+// ── READ ─────────────────────────────────────
+function renderReadPage(){
+  const p=PROBLEMS[readPage];
+  document.getElementById('read-page-num').textContent=`${readPage+1} / ${PROBLEMS.length}`;
+  document.getElementById('read-chapter').textContent=(isCleared(readPage)?'✓ ':'')+p.chapter;
+  document.getElementById('read-poem').textContent=p.poem;
+  document.getElementById('read-task').textContent=p.task;
+}
+function nextPage(){ if(readPage < PROBLEMS.length-1){ readPage++; renderReadPage(); } }
+function prevPage(){ if(readPage > 0){ readPage--; renderReadPage(); } }
+
+let readReturnTo = 'menu';
+
+document.getElementById('read-next').addEventListener('click',()=>{ playSe(); nextPage(); });
+document.getElementById('read-prev').addEventListener('click',()=>{ playSe(); prevPage(); });
+document.getElementById('read-back').addEventListener('click',()=>{
+  playSe();
+  if(readReturnTo==='solve'){ readReturnTo='menu'; renderSolve(); showScreen('solve'); }
+  else { showScreen('menu'); renderMenu(); }
+});
+document.getElementById('read-solve').addEventListener('click',()=>{ playSe(); solveIdx=readPage; readReturnTo='menu'; renderSolve(); showScreen('solve'); });
+
+// ── SOLVE ────────────────────────────────────
+function renderSolve(){
+  const label = PROBLEMS[solveIdx].chapter;
+  document.getElementById('solve-chapter-label').textContent = label;
+
+  const saved = getClearedCode(solveIdx);
+  if(saved) {
+    document.getElementById('code-input').value = saved;
+  } else {
+    document.getElementById('code-input').value = '';
+  }
+  document.getElementById('log-area').textContent = '';
+  document.getElementById('log-back').style.display = 'none';
+}
+
+document.getElementById('solve-back').addEventListener('click',()=>{ playSe(); renderSelect(); showScreen('select'); });
+document.getElementById('solve-chapter-label').addEventListener('click',()=>{ playSe(); readPage=solveIdx; readReturnTo='solve'; renderReadPage(); showScreen('read'); });
+document.getElementById('run-btn').addEventListener('click',()=>{ playSe(); runProblem(); });
+
+async function runProblem(){
+  const source=document.getElementById('code-input').value;
+  const logArea=document.getElementById('log-area');
+  const logBack=document.getElementById('log-back');
+  logArea.textContent='';
+  logBack.style.display='none';
+
+  const prob=PROBLEMS[solveIdx];
+
+  function log(line){ logArea.textContent+=line+'\n'; }
+
+  for(let i=0;i<prob.runs;i++){
+    const tc = prob.genCase(source);
+    const r=runCode(source, tc.input);
+
+    if(!r.ok){
+      log(`> ${String(i+1).padStart(2,'0')}: ${r.error}`);
+      break;
+    }
+
+    playSounds(r.soundLog);
+
+    const pass = prob.judge(r.stdout, tc.expected, tc, r.soundLog, source);
+
+    if(pass){
+      log(`> ${String(i+1).padStart(2,'0')}: PASS`);
+    } else {
+      log(`> ${String(i+1).padStart(2,'0')}: FAIL [CASE ${String(i+1).padStart(2,'0')}]`);
+      let inDisp = tc.input.trim();
+      if(solveIdx===5) inDisp='['+tc.arr.join(', ')+']';
+      log(`  IN  : ${JSON.stringify(inDisp)}`);
+      if(solveIdx===6 || solveIdx===12){
+        log(`  WANT: sound() x${tc.expected.length} (correct frequencies)`);
+        log(`  GOT : sound() x${r.soundLog.length}`);
+      } else {
+        const wantStr = Array.isArray(tc.expected) ? tc.expected.join('') : String(tc.expected);
+        log(`  WANT: ${JSON.stringify(wantStr)}`);
+        log(`  GOT : ${JSON.stringify(r.stdout.trim())}`);
+      }
+      break;
+    }
+
+    if(i===prob.runs-1){
+      log('> SUCCESS');
+      markCleared(solveIdx);
+      setClearedCode(solveIdx, source);
+      logBack.style.display='block';
+      renderSelect();
+    }
+    await new Promise(res=>setTimeout(res,0));
+  }
+}
+
+document.getElementById('log-back').addEventListener('click',()=>{ playSe(); showScreen('menu'); renderMenu(); });
+
+// ── LAB ──────────────────────────────────────
+document.getElementById('lab-back').addEventListener('click',()=>{ playSe(); showScreen('menu'); renderMenu(); });
+document.getElementById('lab-run-btn').addEventListener('click',()=>{ playSe(); runLabCode(); });
+
+function runLabCode(){
+  const source = document.getElementById('lab-code-input').value;
+  const logArea = document.getElementById('lab-log-area');
+  logArea.textContent = '';
+
+  const r = runCode(source, '');
+  if(!r.ok){
+    logArea.textContent = r.error;
+  } else {
+    let out = r.stdout;
+    if(r.soundLog.length > 0){
+      if(out && !out.endsWith('\n')) out += '\n';
+      out += r.soundLog.map(l => `sound(${l.freq}, ${l.ms})`).join('\n');
+    }
+    logArea.textContent = out || '(no output)';
+    playSounds(r.soundLog);
+  }
+}
+
+// ── SAMPLES ──────────────────────────────────
+function renderSamples(){
+  const tabsEl=document.getElementById('sample-tabs');
+  tabsEl.innerHTML='';
+  SAMPLES.forEach((s,i)=>{
+    const el=document.createElement('span');
+    el.className='sample-tab'+(i===sampleIdx?' selected':'');
+    el.textContent=s.name;
+    el.addEventListener('click',()=>{ playSe(); sampleIdx=i; renderSamples(); });
+    el.addEventListener('touchstart', (e) => {}, { passive: true });
+    tabsEl.appendChild(el);
+  });
+  document.getElementById('sample-code-display').textContent=SAMPLES[sampleIdx].code;
+  document.getElementById('sample-log').textContent='';
+}
+
+document.getElementById('samples-back').addEventListener('click',()=>{ playSe(); showScreen('menu'); renderMenu(); });
+
+document.getElementById('sample-run-btn').addEventListener('click',()=>{ playSe();
+  const s=SAMPLES[sampleIdx];
+  const r=runCode(s.code, s.stdin);
+  const logEl=document.getElementById('sample-log');
+  if(!r.ok){
+    logEl.textContent=r.error;
+  } else {
+    let out=r.stdout;
+    if(r.soundLog.length>0){
+      if(out && !out.endsWith('\n')) out+='\n';
+      out+=r.soundLog.map(l=>`sound(${l.freq}, ${l.ms})`).join('\n');
+    }
+    logEl.textContent=out||'(no output)';
+    playSounds(r.soundLog);
+  }
+});
+
+// ── SETTINGS ─────────────────────────────────
+document.getElementById('settings-back').addEventListener('click',()=>{ playSe(); showScreen('menu'); renderMenu(); });
+document.getElementById('delete-save-btn').addEventListener('click',()=>{ deleteAllSaveData(); });
+
+document.getElementById('fullscreen-btn').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {});
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+});
+
+const volBgmSlider = document.getElementById('vol-bgm');
+const volBgmVal    = document.getElementById('vol-bgm-val');
+const volSeSlider  = document.getElementById('vol-se');
+const volSeVal     = document.getElementById('vol-se-val');
+
+// 音量を localStorage に保存する関数
+function saveVolumeSettings() {
+  localStorage.setItem('lv00_vol_bgm', volBgmSlider.value);
+  localStorage.setItem('lv00_vol_se', volSeSlider.value);
+}
+
+// 音量を localStorage から復元する関数
+function loadVolumeSettings() {
+  const bgm = localStorage.getItem('lv00_vol_bgm');
+  const se  = localStorage.getItem('lv00_vol_se');
+
+  const bgmVal = bgm !== null ? parseInt(bgm, 10) : 50;
+  const seVal  = se  !== null ? parseInt(se, 10)  : 80;
+
+  volBgmSlider.value = bgmVal;
+  volBgmVal.textContent = bgmVal;
+  bgmAudio.volume = bgmVal / 100;
+
+  volSeSlider.value = seVal;
+  volSeVal.textContent = seVal;
+  seVolume = seVal / 100;
+}
+
+// スライダー操作時のイベント（保存＋即時反映）
+volBgmSlider.addEventListener('input', ()=>{
+  const v = volBgmSlider.value;
+  volBgmVal.textContent = v;
+  bgmAudio.volume = v / 100;
+  saveVolumeSettings();
+});
+volSeSlider.addEventListener('input', ()=>{
+  const v = volSeSlider.value;
+  volSeVal.textContent = v;
+  seVolume = v / 100;
+  saveVolumeSettings();
+});
+volSeSlider.addEventListener('change', ()=>{ playSe(); });
+
+// ページ読み込み時に音量を復元
+loadVolumeSettings();
+
+// ── INIT ─────────────────────────────────────
+renderMenu();
+showWelcomeIfNeeded();
+
+document.querySelectorAll('.code-input').forEach(el => {
+  el.addEventListener('keydown', function(e){
+    if(e.key==='Tab'){
+      e.preventDefault();
+      const s=this.selectionStart, en=this.selectionEnd;
+      this.value=this.value.substring(0,s)+'    '+this.value.substring(en);
+      this.selectionStart=this.selectionEnd=s+4;
+    }
+  });
+});
+</script>
+</body>
+</html>
