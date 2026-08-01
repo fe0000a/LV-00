@@ -1271,44 +1271,50 @@ let bgmAudio = null;
 let seVolume = 0.8;
 let bgmStarted = false;
 
-function createBgm() {
-  if (bgmAudio) {
-    bgmAudio.pause();
-    bgmAudio.src = '';
-    bgmAudio = null;
-  }
-  bgmAudio = new Audio(getRandomBgm());
-  bgmAudio.loop = false;
-  bgmAudio.volume = parseFloat(localStorage.getItem('lv00_vol_bgm') ?? '50') / 100;
-  bgmAudio.addEventListener('ended', () => {
-    bgmAudio.src = getRandomBgm();
-    bgmAudio.play().catch(() => {});
-  });
-  return bgmAudio;
-}
-
 function startBgm() {
-  if (!bgmStarted) {
-    bgmStarted = true;
-    createBgm();
-    bgmAudio.play().catch(e => {
-      console.warn("BGM再生がブラウザにブロックされました:", e);
+  if (bgmStarted) return;
+
+  if (!bgmAudio) {
+    bgmAudio = new Audio(getRandomBgm());
+    bgmAudio.loop = false;
+    bgmAudio.volume = parseFloat(localStorage.getItem('lv00_vol_bgm') ?? '50') / 100;
+    bgmAudio.addEventListener('ended', () => {
+      bgmAudio.src = getRandomBgm();
+      bgmAudio.play().catch(() => {});
+    });
+  }
+
+  const promise = bgmAudio.play();
+  if (promise !== undefined) {
+    promise.then(() => {
+      bgmStarted = true; // 再生成功時のみフラグを立てる
+      removeInteractionListeners();
+    }).catch(() => {
+      // ブロックされた場合は何もしない（次のボタン操作時に再試行される）
     });
   }
 }
 
 function onFirstInteraction() {
   startBgm();
+}
+
+function removeInteractionListeners() {
+  document.removeEventListener('pointerdown', onFirstInteraction);
   document.removeEventListener('click', onFirstInteraction);
   document.removeEventListener('keydown', onFirstInteraction);
 }
+
+// クリックだけでなく pointerdown（タッチ/マウス押し込み）にも対応
+document.addEventListener('pointerdown', onFirstInteraction);
 document.addEventListener('click', onFirstInteraction);
 document.addEventListener('keydown', onFirstInteraction);
 
 function playSe(file = 'se/se_select.mp3') {
+  startBgm(); // ★ボタン操作（効果音再生）の瞬間にもBGM開始を試みる
   const audio = new Audio(file);
   audio.volume = seVolume;
-  audio.play().catch(()=>{});
+  audio.play().catch(() => {});
 }
 
 // =============================================
