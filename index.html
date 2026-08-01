@@ -1279,7 +1279,10 @@ function startBgm() {
     bgmAudio.loop = false;
     bgmAudio.volume = parseFloat(localStorage.getItem('lv00_vol_bgm') ?? '50') / 100;
     bgmAudio.addEventListener('ended', () => {
-      bgmAudio.src = getRandomBgm();
+      const current = bgmAudio.src;
+      const others = bgmFiles.filter(f => !current.endsWith(f));
+      const next = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : getRandomBgm();
+      bgmAudio.src = next;
       bgmAudio.play().catch(() => {});
     });
   }
@@ -1493,7 +1496,8 @@ function renderSelect(){
   list.innerHTML='';
   PROBLEMS.forEach((_,i)=>{
     const el=document.createElement('div');
-    el.textContent=chapterLabel(i);
+    const check = isCleared(i) ? ' ✓' : '';
+    el.textContent=PROBLEMS[i].chapter+check;
     el.addEventListener('mouseenter',()=>{
       if (isRunning) return;
       const changed = selectMode==='read' ? readPage!==i : solveIdx!==i;
@@ -1513,7 +1517,8 @@ function renderSelect(){
 function updateSelectItems() {
   const activeIdx = selectMode==='read' ? readPage : solveIdx;
   document.querySelectorAll('#select-list > div').forEach((el,i)=>{
-    el.textContent=(i===activeIdx?'> ':'  ')+PROBLEMS[i].chapter;
+    const check = isCleared(i) ? ' ✓' : '';
+    el.textContent=(i===activeIdx?'> ':'  ')+PROBLEMS[i].chapter+check;
   });
 }
 
@@ -1622,7 +1627,11 @@ async function runProblem() {
       
       const pass = prob.judge(r.stdout, tc.expected, tc, r.soundLog, source);
       
+      let inDisp=tc.input.trim();
+      if(solveIdx===5) inDisp='['+tc.arr.join(', ')+']';
+
       log(`> ${String(i+1).padStart(2,'0')}:`);
+      if (inDisp) log(`  in  : ${JSON.stringify(inDisp)}`);
 
       if (r.stdout.trim()) {
         log(`  out: ${JSON.stringify(r.stdout.trim())}`);
@@ -1638,15 +1647,12 @@ async function runProblem() {
         log('  PASS');
       } else {
         log('  FAIL');
-        let inDisp=tc.input.trim();
-        if(solveIdx===5) inDisp='['+tc.arr.join(', ')+']';
-        log(`  IN  : ${JSON.stringify(inDisp)}`);
         if(solveIdx===6||solveIdx===12){
-          log(`  WANT: sound() x${tc.expected.length} (correct frequencies)`);
-          log(`  GOT : sound() x${r.soundLog.length}`);
+          log(`  want: sound() x${tc.expected.length} (correct frequencies)`);
+          log(`  got : sound() x${r.soundLog.length}`);
         } else {
-          log(`  WANT: ${JSON.stringify(Array.isArray(tc.expected)?tc.expected.join(''):String(tc.expected))}`);
-          log(`  GOT : ${JSON.stringify(r.stdout.trim())}`);
+          log(`  want: ${JSON.stringify(Array.isArray(tc.expected)?tc.expected.join(''):String(tc.expected))}`);
+          log(`  got : ${JSON.stringify(r.stdout.trim())}`);
         }
         playSe('se/se_cancel.mp3');
         break;
