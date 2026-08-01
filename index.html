@@ -579,6 +579,7 @@ function setLang(lang) {
   // 現在の画面を再レンダリング
   if (currentScreen === 'menu') renderMenu();
   else if (currentScreen === 'select') renderSelect();
+  else if (currentScreen === 'read') renderReadPage();
   else if (currentScreen === 'stats') renderStats();
   else if (currentScreen === 'help') renderHelp();
 }
@@ -1094,8 +1095,11 @@ function isFreqMatch(got, exp, tolerance = 0.01) {
 const PROBLEMS = [
   {
     chapter: '［第一章］　逆転の鏡',
+    chapter_en: '[Chapter 1]  Mirror Reversed',
     poem: 'テーブルの端に置かれたコップが午後の光を反射させている。\n巻き戻せない映画のフィルムのように、正しい過去へ向かう。',
+    poem_en: 'A glass at the edge of the table catches the afternoon light.\nLike a film that cannot be rewound, it moves toward the correct past.',
     task: '5文字の入力を反転させる。',
+    task_en: 'Reverse a 5-character input.',
     runs: 10,
     genCase() {
       const cs='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -1106,8 +1110,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第二章］　丸められた数字',
+    chapter_en: '[Chapter 2]  Rounded Numbers',
     poem: '数字の殴り書きされた紙を丸めて捨てる。\nさて、丸くなった鉛筆の芯を眺めて何を思う？',
+    poem_en: 'A sheet of scribbled numbers, crumpled and thrown away.\nWhat do you think, gazing at the worn-down tip of a pencil?',
     task: '入力された値のlog2の値を3桁の精度で求める。\n小数点は不要。',
+    task_en: 'Compute log2 of the input to 3 digits of precision.\nNo decimal point needed.',
     runs: 10,
     genCase() {
       const x=Math.floor(Math.random()*9000)+1000;
@@ -1117,8 +1124,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第三章］　触れられない数字',
+    chapter_en: '[Chapter 3]  The Untouchable Number',
     poem: '時計の針が重なる直前の空白。\n誰にも触れられない数字は夜になる。',
+    poem_en: 'A pause just before the clock hands meet.\nThe number no one can touch becomes the night.',
     task: '入力された値番目の素数を出力する。',
+    task_en: 'Output the nth prime number for the given input n.',
     runs: 10,
     genCase() {
       const x=Math.floor(Math.random()*900)+100;
@@ -1129,8 +1139,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第四章］　繰り返しの剥奪',
+    chapter_en: '[Chapter 4]  Stripped of Repetition',
     poem: '既に読んだページをもう一度めくる。\n繰り返しには意味がない。',
+    poem_en: 'Turning a page already read.\nThere is no meaning in repetition.',
     task: '重複する文字を取り除く。',
+    task_en: 'Remove duplicate characters.',
     runs: 10,
     genCase() {
       const al='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -1143,16 +1156,22 @@ const PROBLEMS = [
   },
   {
     chapter: '［第五章］　あるかないかの二択',
+    chapter_en: '[Chapter 5]  A Binary Choice',
     poem: '電波の届かない高架下で信号の点滅を数える。\n世界はあるかないかの二択だった。',
+    poem_en: 'Counting the blink of a signal under an overpass with no reception.\nThe world was a binary choice: on or off.',
     task: '入力された文字列は二つの数で表す。',
+    task_en: 'Express the input number in base two.',
     runs: 10,
     genCase() { const x=Math.floor(Math.random()*9000)+1000; return { input:x+'\n', expected:x.toString(2) }; },
     judge(got,expected){ return got.trim()===expected; }
   },
   {
     chapter: '［第六章］　乱雑な列',
+    chapter_en: '[Chapter 6]  A Disordered Row',
     poem: '散らかった部屋に古びた本。\n背の低い順に並べても意味はない。',
+    poem_en: 'An old book in a cluttered room.\nArranging them by height means nothing.',
     task: '乱雑な列を整理する。',
+    task_en: 'Sort the disordered sequence.',
     runs: 10,
     genCase() {
       const arr=[1,2,3,4,5,6,7,8,9,10].sort(()=>Math.random()-0.5);
@@ -1162,8 +1181,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第七章］　振動する鍵盤',
+    chapter_en: '[Chapter 7]  The Vibrating Keys',
     poem: 'ピアノの鍵盤に指を置く。\n振動する。',
+    poem_en: 'A finger rests on a piano key.\nIt vibrates.',
     task: '入力がCならドの音を。',
+    task_en: 'If the input is C, play the note C.',
     runs: 1,
     genCase() {
       const notes=['C','D','E','F','G','A','B'];
@@ -1178,16 +1200,22 @@ const PROBLEMS = [
   },
   {
     chapter: '［第八章］　自己複製',
+    chapter_en: '[Chapter 8]  Self-Replication',
     poem: '自己複製',
+    poem_en: 'Self-replication.',
     task: '',
+    task_en: '',
     runs: 1,
     genCase(){ return { input:'', expected:'__QUINE__' }; },
     judge(got,_,__,___,source){ return source.trim() !== '' && got.trim()===source.trim(); }
   },
   {
     chapter: '［第九章］　分かたれた影',
+    chapter_en: '[Chapter 9]  The Divided Shadow',
     poem: '光はいくつか影になる。\n大きいものにはやはり意味があった。',
+    poem_en: 'Light splits into several shadows.\nThe largest one still carries meaning.',
     task: '数値を分解して大きいものを見る。',
+    task_en: 'Factor the number and find the largest prime factor.',
     runs: 10,
     genCase() {
       const n = Math.floor(Math.random() * 90000) + 10000;
@@ -1198,8 +1226,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第十章］　波の詳細',
+    chapter_en: '[Chapter 10]  Details of a Wave',
     poem: '波を見ていた。\n終わりがない波。',
+    poem_en: 'Watching the waves.\nWaves without end.',
     task: '三角形の比を2桁の精度で求める。\n点は不要。',
+    task_en: 'Compute the sine ratio to 2 digits of precision.\nNo decimal point needed.',
     runs: 10,
     genCase() {
       const deg = Math.floor(Math.random() * 180) + 1;
@@ -1209,8 +1240,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第十一章］　ルート',
+    chapter_en: '[Chapter 11]  The Root',
     poem: '道のりは長かった。\nでも、これでもまだ道半ばだ。',
+    poem_en: 'The journey has been long.\nBut even now, we are only halfway.',
     task: '面から辺に。',
+    task_en: 'From area to side length. Output sqrt to 3 digits of precision.',
     runs: 10,
     genCase() {
       const n = Math.floor(Math.random() * 90000) + 10000;
@@ -1220,8 +1254,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第十二章］　囲まれること',
+    chapter_en: '[Chapter 12]  Being Surrounded',
     poem: '海に囲まれた孤島がある。\n囲まれていることは正しいことである。',
+    poem_en: 'There is an island surrounded by sea.\nBeing surrounded is correct.',
     task: '囲まれていることを評価する。',
+    task_en: 'Evaluate whether the parentheses are balanced. Output 1 if valid, 0 if not.',
     runs: 10,
     genCase() {
       const len = 10;
@@ -1234,8 +1271,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第十三章］　分散和音',
+    chapter_en: '[Chapter 13]  Scattered Chords',
     poem: '久々に鍵盤に手を置いた。\n案外覚えているものだ。',
+    poem_en: 'I placed my hands on the keys for the first time in a while.\nSurprisingly, the fingers still remembered.',
     task: '小室進行を演奏する。',
+    task_en: 'Play the Komuro progression.',
     runs: 1,
     genCase() {
       const notes = [
@@ -1253,8 +1293,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第十四章］　計算機',
+    chapter_en: '[Chapter 14]  The Calculator',
     poem: '同じ作業は心がすり減る。\n簡単なことはわざわざやる意味もない。',
+    poem_en: 'Repeating the same task wears the mind down.\nThere is no point in doing simple things by hand.',
     task: '計算する。',
+    task_en: 'Evaluate the expression.',
     runs: 10,
     genCase() {
       const ops=['+','-','*','/'];
@@ -1267,8 +1310,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第十五章］　見方の違い',
+    chapter_en: '[Chapter 15]  A Different Perspective',
     poem: '同じ物でも見る方向で違うものになる。\n違いとは何だろうか。',
+    poem_en: 'The same thing looks different depending on the angle.\nWhat is difference, really?',
     task: '変換作業',
+    task_en: 'Apply the transformation.',
     runs: 10,
     genCase() {
       const map={0:6,1:5,2:1,3:4,4:0,5:8,6:3,7:9,8:2,9:7};
@@ -1279,8 +1325,11 @@ const PROBLEMS = [
   },
   {
     chapter: '［第十六章］　自己分析',
+    chapter_en: '[Chapter 16]  Self-Analysis',
     poem: '自己を見つめる。\n\nどこにあるのか。',
+    poem_en: 'Look inward.\n\nWhere is it?',
     task: '',
+    task_en: '',
     runs: 10,
     genCase(source) {
       const filtered = [...source].map((c, i) => ({ c, i })).filter(({ c }) => c !== '\n' && c !== '\r' && c !== ' ' && c !== '\t');
@@ -1707,7 +1756,7 @@ function updateSelectItems() {
   document.querySelectorAll('#select-list > div').forEach((el,i)=>{
     const sel = i===activeIdx;
     const check = isCleared(i) ? '✓ ' : '  ';
-    el.textContent=(sel?'> ':'  ')+check+PROBLEMS[i].chapter;
+    el.textContent=(sel?'> ':'  ')+check+(currentLang==='en'?PROBLEMS[i].chapter_en:PROBLEMS[i].chapter);
   });
 }
 
@@ -1716,10 +1765,11 @@ document.getElementById('select-back').addEventListener('click', goMenu);
 // ── READ ────────────────────────────────────
 function renderReadPage(){
   const p=PROBLEMS[readPage];
+  const en=currentLang==='en';
   document.getElementById('read-page-num').textContent=`${readPage+1} / ${PROBLEMS.length}`;
-  document.getElementById('read-chapter').textContent=(isCleared(readPage)?'✓ ':'')+p.chapter;
-  document.getElementById('read-poem').textContent=p.poem;
-  document.getElementById('read-task').textContent=p.task;
+  document.getElementById('read-chapter').textContent=(isCleared(readPage)?'✓ ':'')+(en?p.chapter_en:p.chapter);
+  document.getElementById('read-poem').textContent=en?p.poem_en:p.poem;
+  document.getElementById('read-task').textContent=en?p.task_en:p.task;
 }
 function nextPage(){ if (isRunning) return; if(readPage<PROBLEMS.length-1){ readPage++; renderReadPage(); } }
 function prevPage(){ if (isRunning) return; if(readPage>0){ readPage--; renderReadPage(); } }
