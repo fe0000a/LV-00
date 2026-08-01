@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LV-00</title>
+<link rel="icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --fs: 16px; --font: 'Noto Serif JP', serif; --bg: #2e2f31; --fg: #f4ede3; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+
+html, body {
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.8;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  padding: 2rem 3rem;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.active { display: flex; }
+
+/* 共通ボタン — .btn, .nav-btn, .back-btn, .run-btn, .menu-item 等すべてに適用 */
+.btn, .nav-btn, .back-btn, .run-btn, .back-from-solve, .sample-run-btn,
+.solve-read-btn, .file-btn, .settings-back, .delete-save-btn, .fullscreen-btn,
+.menu-item, .sample-tab {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.2rem 0;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+.btn:hover, .nav-btn:hover, .back-btn:hover, .run-btn:hover, .back-from-solve:hover,
+.sample-run-btn:hover, .solve-read-btn:hover, .file-btn:hover, .settings-back:hover,
+.delete-save-btn:hover, .fullscreen-btn:hover, .menu-item:hover, .sample-tab:hover {
+  opacity: 0.7;
+}
+
+/* 選択マーカー（select-listはJS側でテキストに付与） */
+.sample-tab.selected::before { content: '> '; }
+.sample-tab:not(.selected)::before { content: '  '; }
+
+/* ========== MENU ========== */
+#screen-menu { justify-content: center; align-items: flex-start; }
+.menu-items { display: flex; flex-direction: column; gap: 0.8rem; }
+.menu-item { letter-spacing: 0.1em; white-space: pre; }
+
+/* ========== READ SCREEN ========== */
+#screen-read { justify-content: space-between; }
+.read-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.read-body { flex: 1; overflow: hidden; }
+.read-chapter { letter-spacing: 0.15em; margin-bottom: 1.5rem; }
+.read-poem { line-height: 2.2; margin-bottom: 1.5rem; white-space: pre-wrap; }
+.read-task { line-height: 2; white-space: pre-wrap; }
+.read-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+
+/* ========== SELECT SCREEN ========== */
+.select-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  width: 100%;
+}
+#select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+#select-list > div {
+  padding: 0.3rem 0;
+  min-height: 2.4rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  white-space: pre;
+}
+
+/* ========== SOLVE / LAB / STATS / SAMPLES SCREEN ========== */
+#screen-solve, #screen-lab, #screen-stats, #screen-samples { flex-direction: column; }
+
+.solve-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.solve-read-btn { letter-spacing: 0.1em; }
+.file-btn { display: inline-flex; letter-spacing: 0.05em; }
+
+.editor-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.code-editor-container { display: flex; flex: 1; min-height: 0; overflow: hidden; gap: 0.8rem; }
+.line-numbers {
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.8;
+  padding: 0.3rem 0;
+  text-align: right;
+  color: #666;
+  user-select: none;
+  overflow: hidden;
+  flex-shrink: 0;
+  min-width: 2rem;
+  white-space: pre;
+}
+textarea.code-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.8;
+  resize: none;
+  flex: 1;
+  min-height: 60px;
+  caret-color: var(--fg);
+  overflow-y: auto;
+  padding: 0.3rem 0;
+  min-width: 0;
+}
+textarea.code-input::placeholder { color: #888; opacity: 0.6; font-family: var(--font); }
+
+.run-btn { margin-top: 1rem; letter-spacing: 0.15em; width: fit-content; flex-shrink: 0; }
+.log-area {
+  margin-top: 1rem;
+  white-space: pre-wrap;
+  line-height: 1.9;
+  flex-shrink: 0;
+  max-height: 25vh;
+  overflow-y: auto;
+}
+.back-from-solve { margin-top: 0.8rem; width: fit-content; flex-shrink: 0; }
+
+/* ========== SAMPLES SCREEN ========== */
+.samples-top { display: flex; justify-content: space-between; margin-bottom: 1rem; flex-shrink: 0; flex-wrap: wrap; gap: 0.5rem; }
+.sample-tabs { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; flex-shrink: 0; }
+.sample-tab { white-space: pre; }
+.sample-code-area { flex: 1; overflow: auto; min-height: 0; }
+.sample-code { white-space: pre; line-height: 1.8; padding: 0.3rem 0; min-height: 60px; }
+.sample-run-btn { margin-top: 1rem; letter-spacing: 0.15em; width: fit-content; flex-shrink: 0; }
+.sample-log { margin-top: 1rem; white-space: pre-wrap; line-height: 1.9; flex-shrink: 0; max-height: 15vh; overflow: auto; }
+
+
+
+/* ========== STATS SCREEN ========== */
+.stats-table-wrap { flex: 1; overflow-y: auto; min-height: 0; margin-top: 0.5rem; }
+.stats-table { width: 100%; border-collapse: collapse; text-align: left; }
+.stats-table th, .stats-table td { padding: 0.3rem 0.5rem; }
+.stats-table th { letter-spacing: 0.05em; opacity: 0.7; font-weight: 400; }
+.stats-table td:first-child, .stats-table th:first-child { padding-left: 0; }
+.stats-table td:last-child, .stats-table th:last-child { padding-right: 0; }
+.stats-summary { margin-top: 1rem; flex-shrink: 0; letter-spacing: 0.05em; }
+
+/* ========== SETTINGS SCREEN ========== */
+#screen-settings { justify-content: center; align-items: flex-start; }
+.settings-title { letter-spacing: 0.3em; margin-bottom: 2rem; }
+.settings-items { display: flex; flex-direction: column; gap: 1.5rem; }
+.settings-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.settings-label { width: 6rem; letter-spacing: 0.1em; flex-shrink: 0; }
+.vol-slider-wrap { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 140px;
+  height: 2px;
+  background: var(--fg);
+  outline: none;
+  cursor: pointer;
+}
+.vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--fg);
+  cursor: pointer;
+}
+.vol-slider::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--fg);
+  border: none;
+  cursor: pointer;
+}
+.vol-value { width: 2.5rem; text-align: right; letter-spacing: 0.05em; }
+.settings-back { margin-top: 2rem; letter-spacing: 0.1em; }
+.delete-save-btn { display: inline-flex; letter-spacing: 0.05em; opacity: 0.7; }
+.delete-save-btn:hover { opacity: 1; }
+.fullscreen-btn { display: inline-flex; letter-spacing: 0.05em; opacity: 0.8; }
+.fullscreen-btn:hover { opacity: 1; }
+
+/* ========== CUSTOM DIALOG ========== */
+#dialog-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+#dialog-overlay.active { display: flex; }
+.dialog-box { background: var(--bg); padding: 2rem 2.5rem; max-width: 420px; width: 90%; text-align: center; }
+.dialog-message { line-height: 1.8; margin-bottom: 1.8rem; letter-spacing: 0.05em; }
+.dialog-buttons { display: flex; justify-content: center; gap: 2.5rem; }
+.dialog-btn {
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.1em;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: var(--fs);
+  padding: 0.2rem 0;
+  border: none;
+  transition: opacity 0.2s;
+}
+.dialog-btn:hover { opacity: 0.6; }
+.dialog-btn.hidden { display: none; }
+
+@media (max-width: 768px) {
+  .screen { padding: 0.8rem 1rem; }
+  #screen-menu { padding-top: 0.5rem; }
+  #screen-menu > div:nth-child(2) { margin-bottom: 1.5rem !important; }
+  .menu-items { gap: 0.4rem; }
+  .menu-item, .read-nav .nav-btn, #select-list > div, .back-from-solve,
+  .sample-tab, .sample-run-btn, .run-btn, .back-btn,
+  .delete-save-btn, .fullscreen-btn, .settings-back,
+  .file-btn, .solve-read-btn { min-height: 2.4rem; }
+  .read-top { margin-bottom: 0.8rem; }
+  .read-chapter { margin-bottom: 0.8rem; }
+  .read-poem { margin-bottom: 0.8rem; }
+  .read-nav { gap: 0.8rem; margin-top: 0.8rem; }
+  .read-nav .nav-btn { padding: 0.2rem 0; }
+  #select-list > div { padding: 0.2rem 0; }
+  .solve-top { margin-bottom: 0.6rem; }
+  .code-editor-container { gap: 0.4rem; }
+  textarea.code-input { min-height: 50px; padding: 0.2rem 0; }
+  .line-numbers { padding: 0.2rem 0; }
+  .run-btn { margin-top: 0.6rem; }
+  .log-area { margin-top: 0.6rem; max-height: 20vh; }
+  .back-from-solve { margin-top: 0.6rem; }
+  .samples-top { margin-bottom: 0.6rem; }
+  .sample-tabs { gap: 0.6rem; margin-bottom: 0.6rem; }
+  .sample-run-btn { margin-top: 0.6rem; }
+  .sample-log { margin-top: 0.6rem; max-height: 12vh; }
+  .stats-table th, .stats-table td { padding: 0.2rem 0.3rem; }
+  .stats-summary { margin-top: 0.6rem; }
+  .settings-title { margin-bottom: 1.2rem; }
+  .settings-items { gap: 0.8rem; }
+  .settings-row { gap: 0.6rem; }
+  .settings-label { width: 4.5rem; }
+  .vol-slider { width: 100px; }
+  .vol-value { width: 2rem; }
+  .settings-back { margin-top: 1.2rem; }
+  .dialog-box { padding: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .screen { padding: 0.5rem 0.6rem; }
+  #screen-menu { padding-top: 0.3rem; }
+  #screen-menu > div:nth-child(2) { margin-bottom: 1rem !important; }
+  .menu-item, #select-list > div { min-height: 2.2rem; }
+  .read-nav { gap: 0.6rem; }
+  .vol-slider { width: 80px; }
+  .settings-label { width: 4rem; }
+  textarea.code-input { min-height: 40px; }
+  .log-area { max-height: 18vh; }
+  .stats-table th, .stats-table td { padding: 0.15rem 0.2rem; }
+  .dialog-box { padding: 1.2rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="screen-menu" class="screen active">
+  <div style="margin-bottom:0.5rem; letter-spacing:0.5em;">LV-00</div>
+  <div style="margin-bottom:4rem;"></div>
+  <div class="menu-items">
+    <div class="menu-item" data-idx="0"></div>
+    <div class="menu-item" data-idx="1"></div>
+    <div class="menu-item" data-idx="2"></div>
+    <div class="menu-item" data-idx="3"></div>
+    <div class="menu-item" data-idx="4"></div>
+    <div class="menu-item" data-idx="5"></div>
+  </div>
+</div>
+
+<!-- READ -->
+<div id="screen-read" class="screen">
+  <div class="read-top">
+    <span class="back-btn" id="read-back"></span>
+    <span id="read-page-num"></span>
+  </div>
+  <div class="read-body">
+    <div class="read-chapter" id="read-chapter"></div>
+    <div class="read-poem" id="read-poem"></div>
+    <div class="read-task" id="read-task"></div>
+  </div>
+  <div class="read-nav">
+    <span class="nav-btn" id="read-solve" style="margin-right:auto;"></span>
+    <span class="nav-btn" id="read-prev"></span>
+    <span class="nav-btn" id="read-next"></span>
+  </div>
+</div>
+
+<!-- SELECT -->
+<div id="screen-select" class="screen">
+  <div class="select-header">
+    <span class="back-btn" id="select-back"></span>
+    <span id="select-title"></span>
+  </div>
+  <div id="select-list"></div>
+</div>
+
+<!-- SOLVE -->
+<div id="screen-solve" class="screen">
+  <div class="solve-top">
+    <span class="back-btn" id="solve-back"></span>
+    <span class="solve-read-btn" id="solve-read-btn"></span>
+  </div>
+  <div class="editor-wrap">
+    <div class="code-editor-container">
+      <div class="line-numbers" id="line-numbers"></div>
+      <textarea id="code-input" class="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+    </div>
+    <div class="run-btn" id="run-btn"></div>
+    <div class="log-area" id="log-area"></div>
+    <div class="back-from-solve" id="log-back" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- LAB -->
+<div id="screen-lab" class="screen">
+  <div class="solve-top">
+    <span class="back-btn" id="lab-back"></span>
+    <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+      <span id="lab-title"></span>
+      <span class="file-btn" id="lab-import"></span>
+      <span class="file-btn" id="lab-export"></span>
+    </div>
+  </div>
+  <div class="editor-wrap">
+    <div class="code-editor-container">
+      <div class="line-numbers" id="lab-line-numbers"></div>
+      <textarea id="lab-code-input" class="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+    </div>
+    <div class="run-btn" id="lab-run-btn"></div>
+    <div class="log-area" id="lab-log-area"></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="screen-stats" class="screen">
+  <div style="margin-bottom:0.5rem; flex-shrink:0;">
+    <span class="back-btn" id="stats-back"></span>
+  </div>
+  <div class="stats-table-wrap">
+    <table class="stats-table">
+      <thead>
+        <tr><th id="th-chapter"></th><th id="th-status"></th><th id="th-minlines"></th><th id="th-minchars"></th></tr>
+      </thead>
+      <tbody id="stats-body"></tbody>
+    </table>
+  </div>
+  <div class="stats-summary" id="stats-summary"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="screen-settings" class="screen">
+  <div class="settings-title" id="settings-title"></div>
+  <div class="settings-items">
+    <div class="settings-row">
+      <div class="settings-label">BGM</div>
+      <div class="vol-slider-wrap">
+        <input type="range" class="vol-slider" id="vol-bgm" min="0" max="100" value="50">
+        <span class="vol-value" id="vol-bgm-val">50</span>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label" id="lbl-se"></div>
+      <div class="vol-slider-wrap">
+        <input type="range" class="vol-slider" id="vol-se" min="0" max="100" value="80">
+        <span class="vol-value" id="vol-se-val">80</span>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label" id="lbl-lang">言語</div>
+      <div style="display:flex; gap:1rem;">
+        <span class="sample-tab" id="lang-ja" onclick="setLang('ja')">日本語</span>
+        <span class="sample-tab" id="lang-en" onclick="setLang('en')">English</span>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="delete-save-btn" id="delete-save-btn"></span>
+    </div>
+    <div class="settings-row">
+      <span class="fullscreen-btn" id="fullscreen-btn"></span>
+    </div>
+  </div>
+  <div class="settings-back" id="settings-back"></div>
+</div>
+
+<!-- SAMPLES -->
+<div id="screen-samples" class="screen">
+  <div class="samples-top">
+    <span class="back-btn" id="samples-back"></span>
+  </div>
+  <div class="sample-tabs" id="sample-tabs"></div>
+  <div class="code-editor-container" style="flex:1; min-height:0;">
+    <div class="line-numbers" id="sample-line-numbers"></div>
+    <div class="sample-code-area" style="flex:1; overflow:auto; min-height:0;">
+      <div class="sample-code" id="sample-code-display"></div>
+    </div>
+  </div>
+  <div class="sample-run-btn" id="sample-run-btn"></div>
+  <div class="sample-log" id="sample-log"></div>
+</div>
+
+<!-- DIALOG -->
+<div id="dialog-overlay">
+  <div class="dialog-box">
+    <div class="dialog-message" id="dialog-message">メッセージ</div>
+    <div class="dialog-buttons">
+      <span class="dialog-btn" id="dialog-cancel"></span>
+      <span class="dialog-btn" id="dialog-confirm"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+//  LANGUAGE
+// =============================================
+const LANG = {
+  ja: {
+    menu: ['問題を読む','課題を解く','標本を見る','実験','統計','設定'],
+    readBack: '戻る', readSolve: '課題を解く', readPrev: '前へ', readNext: '次へ',
+    selectBack: 'メニューに戻る',
+    selectTitleRead: '読む問題を選ぶ', selectTitleSolve: '解く問題を選ぶ',
+    solveBack: '問題一覧に戻る', solveReadBtn: '問題を読む',
+    run: '実行', stop: '停止', backToMenu: 'メニューに戻る',
+    labTitle: '実験', labImport: 'インポート', labExport: 'エクスポート',
+    sampleRunBtn: '実行',
+    samplesBack: 'メニューに戻る',
+    statsBack: 'メニューに戻る',
+    thChapter: '章', thStatus: '状態', thMinLines: '最小行数', thMinChars: '最小文字数',
+    cleared: 'クリア済み', notCleared: '未クリア',
+    statsSummary: (c,n) => `クリア済み: ${c} / ${n}`,
+    settingsTitle: '設定', lblSe: '効果音', lblLang: '言語',
+    deleteSave: 'セーブデータを削除', fullscreen: '全画面表示',
+    settingsBack: 'メニューに戻る',
+    dialogCancel: 'いいえ', dialogConfirm: 'はい',
+    welcomeMsg: '標本からLV-00の構造を理解して課題を解きましょう',
+    deleteConfirm: 'セーブデータを削除しますか？',
+    placeholder: '>ここに入力', labPlaceholder: '>自由にコードを書いて実行',
+  },
+  en: {
+    menu: ['Read','Solve','Samples','Lab','Stats','Settings'],
+    readBack: 'Back', readSolve: 'Solve', readPrev: 'Prev', readNext: 'Next',
+    selectBack: 'Back to Menu',
+    selectTitleRead: 'Select Chapter to Read', selectTitleSolve: 'Select Chapter to Solve',
+    solveBack: 'Back to List', solveReadBtn: 'Read Problem',
+    run: 'Run', stop: 'Stop', backToMenu: 'Back to Menu',
+    labTitle: 'Lab', labImport: 'Import', labExport: 'Export',
+    sampleRunBtn: 'Run',
+    samplesBack: 'Back to Menu',
+    statsBack: 'Back to Menu',
+    thChapter: 'Ch', thStatus: 'Status', thMinLines: 'Min Lines', thMinChars: 'Min Chars',
+    cleared: 'Cleared', notCleared: 'Not Cleared',
+    statsSummary: (c,t) => `Cleared: ${c} / ${t}`,
+    settingsTitle: 'Settings', lblSe: 'SFX', lblLang: 'Language',
+    deleteSave: 'Delete Save Data', fullscreen: 'Fullscreen',
+    settingsBack: 'Back to Menu',
+    dialogCancel: 'No', dialogConfirm: 'Yes',
+    welcomeMsg: 'Study the samples to understand LV-00 syntax, then solve the challenges.',
+    deleteConfirm: 'Delete all save data?',
+    placeholder: '>Type here', labPlaceholder: '>Write and run code freely',
+  }
+};
+
+let currentLang = localStorage.getItem('lv00_lang') || 'ja';
+
+function t() { return LANG[currentLang]; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lv00_lang', lang);
+  applyLang();
+  // 現在の画面を再レンダリング
+  if (currentScreen === 'menu') renderMenu();
+  else if (currentScreen === 'select') renderSelect();
+  else if (currentScreen === 'stats') renderStats();
+}
+
+function applyLang() {
+  const L = t();
+  // 読む画面
+  document.getElementById('read-back').textContent = L.readBack;
+  document.getElementById('read-solve').textContent = L.readSolve;
+  document.getElementById('read-prev').textContent = L.readPrev;
+  document.getElementById('read-next').textContent = L.readNext;
+  // 選択画面
+  document.getElementById('select-back').textContent = L.selectBack;
+  // 解く画面
+  document.getElementById('solve-back').textContent = L.solveBack;
+  document.getElementById('solve-read-btn').textContent = L.solveReadBtn;
+  const runBtn = document.getElementById('run-btn');
+  if (runBtn) runBtn.textContent = isRunning ? L.stop : L.run;
+  document.getElementById('log-back').textContent = L.backToMenu;
+  document.getElementById('code-input').placeholder = L.placeholder;
+  // 実験画面
+  document.getElementById('lab-back').textContent = L.backToMenu;
+  document.getElementById('lab-title').textContent = L.labTitle;
+  document.getElementById('lab-import').textContent = L.labImport;
+  document.getElementById('lab-export').textContent = L.labExport;
+  const labRunBtn = document.getElementById('lab-run-btn');
+  if (labRunBtn) labRunBtn.textContent = isRunning ? L.stop : L.run;
+  document.getElementById('lab-code-input').placeholder = L.labPlaceholder;
+  // 標本画面
+  document.getElementById('samples-back').textContent = L.samplesBack;
+  document.getElementById('sample-run-btn').textContent = L.sampleRunBtn;
+  // 統計画面
+  document.getElementById('stats-back').textContent = L.statsBack;
+  document.getElementById('th-chapter').textContent = L.thChapter;
+  document.getElementById('th-status').textContent = L.thStatus;
+  document.getElementById('th-minlines').textContent = L.thMinLines;
+  document.getElementById('th-minchars').textContent = L.thMinChars;
+  // 設定画面
+  document.getElementById('settings-title').textContent = L.settingsTitle;
+  document.getElementById('lbl-se').textContent = L.lblSe;
+  document.getElementById('lbl-lang').textContent = L.lblLang;
+  document.getElementById('delete-save-btn').textContent = L.deleteSave;
+  document.getElementById('fullscreen-btn').textContent = L.fullscreen;
+  document.getElementById('settings-back').textContent = L.settingsBack;
+  // ダイアログ
+  document.getElementById('dialog-cancel').textContent = L.dialogCancel;
+  document.getElementById('dialog-confirm').textContent = L.dialogConfirm;
+  // 言語タブのselected状態
+  document.getElementById('lang-ja').classList.toggle('selected', currentLang === 'ja');
+  document.getElementById('lang-en').classList.toggle('selected', currentLang === 'en');
+}
+
+// =============================================
+//  LV-00 INTERPRETER
+// =============================================
+class LV00Interpreter {
+  constructor(sourceText) {
+    this.sourceText = sourceText;
+    this.regs  = Object.create(null);
+    this.arrs  = Object.create(null);
+    this.soundLog = [];
+    this.stdout = '';
+    this.steps  = 0;
+    this.MAX_STEPS = 2000000;
+    this.stdinStr = '';
+    this.stdinPos = 0;
+  }
+
+  setStdin(s) { this.stdinStr = s; this.stdinPos = 0; }
+
+  run() {
+    const stmts = this._parse(this.sourceText);
+    this._execBlock(stmts);
+    return { stdout: this.stdout, soundLog: this.soundLog };
+  }
+
+  _lex(src) {
+    const tokens = [];
+    for (const [li, rawLine] of src.split('\n').entries()) {
+      let line = rawLine;
+      const ci = line.indexOf('//');
+      if (ci >= 0) line = line.slice(0, ci);
+      line = line.trim();
+      if (!line) continue;
+      let current = '';
+      for (const ch of line) {
+        if (ch === '{' || ch === '}') {
+          if (current.trim()) tokens.push({ v: current.trim(), ln: li + 1 });
+          tokens.push({ v: ch, ln: li + 1 });
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      if (current.trim()) tokens.push({ v: current.trim(), ln: li + 1 });
+    }
+    return tokens;
+  }
+
+  _parse(src) {
+    const ctx = { tokens: this._lex(src), pos: 0 };
+    const stmts = [];
+    while (ctx.pos < ctx.tokens.length) stmts.push(this._parseStmt(ctx));
+    return stmts;
+  }
+
+  _parseStmt(ctx) {
+    const tok = ctx.tokens[ctx.pos++];
+    if (!tok) throw { code: 'SYNTAX', ln: 0 };
+    const { v, ln } = tok;
+    if (v === '}') throw { code: 'UNEXPECTED_CLOSE_BRACE', ln };
+
+    // 制御構文: if / loop / while
+    for (const [kw, type] of [['if ', 'IF'], ['loop ', 'LOOP'], ['while ', 'WHILE']]) {
+      if (v.startsWith(kw)) {
+        let expr = v.slice(kw.length).trim();
+        // 次のトークンが { ならブロック、それ以外は次の1ステートメントを本体とする
+        let body;
+        if (ctx.pos < ctx.tokens.length && ctx.tokens[ctx.pos].v === '{') {
+          ctx.pos++; // { を消費
+          body = this._parseBlock(ctx, true, ln);
+        } else {
+          body = [this._parseStmt(ctx)];
+        }
+        return { type, cond: expr, expr, body, ln };
+      }
+    }
+
+    if (v === '{') {
+      return { type: 'BLOCK', body: this._parseBlock(ctx, true, ln), ln };
+    }
+    return { type: 'STMT', v, ln };
+  }
+
+  _parseBlock(ctx, expectClosing = false, startLine = 0) {
+    const body = [];
+    let foundClosing = false;
+    while (ctx.pos < ctx.tokens.length) {
+      const tok = ctx.tokens[ctx.pos];
+      if (tok && tok.v === '}') { ctx.pos++; foundClosing = true; break; }
+      const s = this._parseStmt(ctx);
+      if (s.type === 'CLOSE') break;
+      body.push(s);
+    }
+    if (expectClosing && !foundClosing) throw { code: 'UNCLOSED_BLOCK', ln: startLine };
+    return body;
+  }
+
+  _execBlock(stmts) { for (const s of stmts) this._execStmt(s); }
+
+  _execStmt(s) {
+    if (++this.steps > this.MAX_STEPS) throw { code: 'TIMEOUT' };
+    if (typeof cancelRun !== 'undefined' && cancelRun) throw { code: 'CANCELLED' };
+
+    switch (s.type) {
+      case 'BLOCK': this._execBlock(s.body); break;
+      case 'IF':    if (this._eval(s.cond, s.ln) !== 0) this._execBlock(s.body); break;
+      case 'LOOP': {
+        const n = Math.trunc(this._eval(s.expr, s.ln));
+        for (let i = 0; i < n; i++) {
+          if (typeof cancelRun !== 'undefined' && cancelRun) throw { code: 'CANCELLED' };
+          this._execBlock(s.body);
+        }
+        break;
+      }
+      case 'WHILE':
+        while (this._eval(s.cond, s.ln) !== 0) {
+          if (++this.steps > this.MAX_STEPS) throw { code: 'TIMEOUT' };
+          if (typeof cancelRun !== 'undefined' && cancelRun) throw { code: 'CANCELLED' };
+          this._execBlock(s.body);
+        }
+        break;
+      case 'STMT': this._execLine(s.v, s.ln); break;
+    }
+  }
+
+  _execLine(line, ln) {
+    const m = line.match(/^([a-z][a-z0-9]*)(\[[^\]]*\])?\s*=\s*(.+)$/);
+    if (m) {
+      const varName = m[1];
+      if (varName.length > 1) throw { code: 'LONG_VAR', ln, varName };
+      const idxExpr = m[2] ? m[2].slice(1, -1) : null;
+      const rhs = m[3].trim();
+      if (rhs === 'in.str()') { if (idxExpr !== null) throw { code: 'SYNTAX', ln }; this.arrs[varName] = this._readStr(); return; }
+      if (rhs === 'self()')   { if (idxExpr !== null) throw { code: 'SYNTAX', ln }; this.arrs[varName] = this._selfArr(); return; }
+      const val = this._eval(rhs, ln);
+      if (idxExpr !== null) {
+        const idx = Math.trunc(this._eval(idxExpr, ln));
+        if (idx < 0) throw { code: 'OUT_OF_BOUNDS', ln };
+        if (!this.arrs[varName]) this.arrs[varName] = [];
+        while (this.arrs[varName].length <= idx) this.arrs[varName].push(0);
+        this.arrs[varName][idx] = val;
+      } else {
+        this.regs[varName] = val;
+      }
+      return;
+    }
+    this._eval(line, ln);
+  }
+
+  _eval(src, ln) {
+    src = src.trim();
+    try {
+      const p = { src, pos: 0, ln };
+      const v = this._parseCompare(p);
+      this._ws(p);
+      if (p.pos < p.src.length) {
+        const ch = p.src[p.pos];
+        if ('=&|^!~@#'.includes(ch)) throw { code: 'INVALID_OPERATOR', ln, op: ch };
+        throw { code: 'SYNTAX', ln };
+      }
+      return v;
+    } catch (e) {
+      if (e && e.code) throw e;
+      throw { code: 'SYNTAX', ln };
+    }
+  }
+
+  _ws(p) { while (p.pos < p.src.length && p.src[p.pos] === ' ') p.pos++; }
+
+  _parseCompare(p) {
+    let left = this._parseAdd(p);
+    this._ws(p);
+    for (const op of ['==','!=','<=','>=','<','>']) {
+      if (p.src.startsWith(op, p.pos)) {
+        p.pos += op.length; this._ws(p);
+        const right = this._parseAdd(p);
+        const r = op==='==' ? left===right : op==='!=' ? left!==right
+                : op==='<'  ? left<right   : op==='>'  ? left>right
+                : op==='<=' ? left<=right  : left>=right;
+        return r ? 1 : 0;
+      }
+    }
+    return left;
+  }
+
+  _parseAdd(p) {
+    let v = this._parseMul(p); this._ws(p);
+    while (p.pos < p.src.length && (p.src[p.pos]==='+' || p.src[p.pos]==='-')) {
+      const op = p.src[p.pos++]; this._ws(p);
+      v = op==='+' ? v + this._parseMul(p) : v - this._parseMul(p);
+      this._ws(p);
+    }
+    return v;
+  }
+
+  _parseMul(p) {
+    let v = this._parseUnary(p); this._ws(p);
+    while (p.pos < p.src.length && '*/%.'.includes(p.src[p.pos]) && p.src[p.pos] !== '.') {
+      const op = p.src[p.pos++]; this._ws(p);
+      const r = this._parseUnary(p);
+      if ((op==='/' || op==='%') && r===0) throw { code: 'DIV_BY_ZERO', ln: p.ln };
+      v = op==='*' ? v*r : op==='/' ? v/r : v%r;
+      this._ws(p);
+    }
+    return v;
+  }
+
+  _parseUnary(p) {
+    this._ws(p);
+    if (p.src[p.pos]==='-') { p.pos++; return -this._parseAtom(p); }
+    return this._parseAtom(p);
+  }
+
+  _parseAtom(p) {
+    this._ws(p);
+    const { src, ln } = p;
+    if (p.pos >= src.length) throw { code: 'UNEXPECTED_END', ln };
+
+    if (src[p.pos]==='(') {
+      p.pos++;
+      const v = this._parseCompare(p); this._ws(p);
+      if (p.pos >= src.length || src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++; return v;
+    }
+
+    if (/[0-9]/.test(src[p.pos])) {
+      let s='';
+      while (p.pos < src.length && /[0-9]/.test(src[p.pos])) s += src[p.pos++];
+      return Number(s);
+    }
+
+    if (src.startsWith('in.num()', p.pos))  { p.pos+=8; return this._readNum(); }
+    if (src.startsWith('in.str()', p.pos))  { p.pos+=8; this._readStr(); return 0; }
+    if (src.startsWith('self()', p.pos))    { p.pos+=6; this._selfArr(); return 0; }
+
+    if (src.startsWith('out.chr(', p.pos)) {
+      p.pos+=8;
+      const v=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      this.stdout += String.fromCharCode(Math.trunc(v));
+      return 0;
+    }
+
+    if (src.startsWith('out.num(', p.pos)) {
+      p.pos+=8;
+      const v=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      this.stdout += Math.trunc(v).toString();
+      return 0;
+    }
+
+    if (src.startsWith('sound(', p.pos)) {
+      p.pos+=6;
+      const freq=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==',') throw { code: 'MISSING_COMMA', ln, near: 'sound()' };
+      p.pos++; this._ws(p);
+      const ms=this._parseCompare(p); this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      this.soundLog.push({ freq, ms: Math.trunc(ms) });
+      return 0;
+    }
+
+    if (src.startsWith('len(', p.pos)) {
+      p.pos+=4;
+      let name='';
+      while (p.pos < src.length && /[a-z0-9_]/.test(src[p.pos])) name += src[p.pos++];
+      this._ws(p);
+      if (src[p.pos]!==')') throw { code: 'UNCLOSED_PAREN', ln };
+      p.pos++;
+      return (this.arrs[name]||[]).length;
+    }
+
+    if (src.startsWith('out.', p.pos) || src.startsWith('in.', p.pos)) {
+      const end = src.indexOf('(', p.pos);
+      throw { code: 'UNKNOWN_COMMAND', ln, name: end>=0 ? src.slice(p.pos, end) : src.slice(p.pos) };
+    }
+
+    if (/[a-z_]/.test(src[p.pos])) {
+      let name='';
+      while (p.pos < src.length && /[a-z0-9_]/.test(src[p.pos])) name += src[p.pos++];
+      if (name.length > 1) throw { code: 'LONG_VAR', ln: p.ln, varName: name };
+      this._ws(p);
+      if (src[p.pos]==='[') {
+        p.pos++;
+        const idx=this._parseCompare(p); this._ws(p);
+        if (src[p.pos]!==']') throw { code: 'UNCLOSED_BRACKET', ln };
+        p.pos++;
+        const i=Math.trunc(idx);
+        if (i<0) throw { code: 'OUT_OF_BOUNDS', ln };
+        return (this.arrs[name]||[])[i] ?? 0;
+      }
+      return this.regs[name] ?? 0;
+    }
+
+    const ch = src[p.pos];
+    if ('=&|^!~@#'.includes(ch)) throw { code: 'INVALID_OPERATOR', ln, op: ch };
+    throw { code: 'SYNTAX', ln };
+  }
+
+  _readStr() {
+    let buf='';
+    while (this.stdinPos < this.stdinStr.length) {
+      const ch = this.stdinStr[this.stdinPos++];
+      if (ch==='\n') break;
+      buf+=ch;
+    }
+    // 修正: 各文字から直接 charCodeAt(0) を取得
+    return [...buf].map(c => c.charCodeAt(0));
+  }
+
+  _readNum() {
+    const s = this.stdinStr;
+    let i = this.stdinPos;
+    // 数字または '-' までスキップ
+    while (i < s.length && !/[0-9\-]/.test(s[i])) i++;
+    let num = '';
+    if (i < s.length && s[i] === '-') {
+      num += s[i++];
+      // 数字が続かない場合は 0 を返す
+      if (i >= s.length || !/[0-9]/.test(s[i])) {
+        this.stdinPos = i;
+        return 0;
+      }
+    }
+    while (i < s.length && /[0-9]/.test(s[i])) num += s[i++];
+    this.stdinPos = i;
+    return num ? Number(num) : 0;
+  }
+
+  _selfArr() {
+    // 修正: 各文字から直接 charCodeAt(0) を取得
+    return [...this.sourceText].map(c => c.charCodeAt(0));
+  }
+}
+
+// =============================================
+//  RUNNER
+// =============================================
+function runCode(source, stdin) {
+  const interp = new LV00Interpreter(source);
+  interp.setStdin(stdin);
+  try {
+    const r = interp.run();
+    return { ok: true, stdout: r.stdout, soundLog: r.soundLog, error: null };
+  } catch(e) {
+    const ERR = {
+      TIMEOUT:               () => 'ERR: TIMEOUT',
+      DIV_BY_ZERO:           () => `ERR: DIV BY ZERO AT LINE ${e.ln}`,
+      OUT_OF_BOUNDS:         () => `ERR: OUT OF BOUNDS AT LINE ${e.ln}`,
+      LONG_VAR:              () => `ERR: VARIABLE NAME MUST BE ONE LETTER AT LINE ${e.ln} ("${e.varName}")`,
+      UNCLOSED_PAREN:        () => `ERR: UNCLOSED PARENTHESIS AT LINE ${e.ln}`,
+      UNCLOSED_BRACKET:      () => `ERR: UNCLOSED BRACKET AT LINE ${e.ln}`,
+      MISSING_COMMA:         () => `ERR: MISSING COMMA AT LINE ${e.ln} (in ${e.near})`,
+      UNKNOWN_COMMAND:       () => `ERR: UNKNOWN COMMAND AT LINE ${e.ln} ("${e.name}")`,
+      INVALID_OPERATOR:      () => `ERR: INVALID OPERATOR AT LINE ${e.ln} ("${e.op}")`,
+      UNEXPECTED_END:        () => `ERR: UNEXPECTED END OF EXPRESSION AT LINE ${e.ln}`,
+      SYNTAX:                () => `ERR: SYNTAX AT LINE ${e.ln}`,
+      UNCLOSED_BLOCK:        () => `ERR: UNCLOSED BLOCK (MISSING '}') STARTED AT LINE ${e.ln}`,
+      UNEXPECTED_CLOSE_BRACE:() => `ERR: UNEXPECTED '}' AT LINE ${e.ln}`,
+      CANCELLED:             () => 'CANCELLED',
+    };
+    const msg = e && ERR[e.code] ? ERR[e.code]() : 'ERR: RUNTIME';
+    return { ok: false, stdout: '', soundLog: [], error: msg };
+  }
+}
+
+// =============================================
+//  SOUND PLAYER (Web Audio API) - 逐次再生・ログ出力対応
+// =============================================
+let audioCtx = null;
+let soundTimeouts = [];
+let soundOscillators = [];
+let soundResolves = [];   // 各音声待機Promiseのresolveを保存
+
+function cancelAllSounds() {
+  // タイムアウトをクリア
+  soundTimeouts.forEach(clearTimeout);
+  soundTimeouts = [];
+  // オシレーターを停止
+  soundOscillators.forEach(osc => { try { osc.stop(); osc.disconnect(); } catch(e) {} });
+  soundOscillators = [];
+  // 保留中のPromiseをすべて解決して解放
+  soundResolves.forEach(resolve => resolve());
+  soundResolves = [];
+}
+
+// 音声を1つずつ再生し、各音声の開始直前に onSound を呼ぶ
+async function playSounds(soundLog, onSound) {
+  if (!soundLog?.length) return;
+  cancelAllSounds();
+  audioCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  for (let i = 0; i < soundLog.length; i++) {
+    if (cancelRun) break;
+    const { freq, ms } = soundLog[i];
+    if (onSound) onSound({ freq, ms }, i, soundLog.length);
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    gain.gain.value = 0.15;
+    osc.start();
+    soundOscillators.push(osc);
+
+    // 待機Promiseを作成し、resolveを配列に保存
+    await new Promise(resolve => {
+      soundResolves.push(resolve);
+      const timeout = setTimeout(() => {
+        try { osc.stop(); osc.disconnect(); } catch(e) {}
+        resolve();
+        // resolveが呼ばれたら配列から削除
+        soundResolves = soundResolves.filter(r => r !== resolve);
+      }, ms);
+      soundTimeouts.push(timeout);
+    });
+
+    if (cancelRun) {
+      cancelAllSounds();
+      break;
+    }
+  }
+}
+
+// =============================================
+//  PROBLEMS (全16章)
+// =============================================
+function generateBalancedParentheses(length) {
+  let res = [], balance = 0;
+  for (let i = 0; i < length; i++) {
+    const remaining = length - i;
+    const options = [];
+    if (balance + 1 <= remaining - 1) options.push('(');
+    if (balance > 0) options.push(')');
+    const pick = options[Math.floor(Math.random() * options.length)];
+    res.push(pick);
+    if (pick === '(') balance++; else balance--;
+  }
+  return res.join('');
+}
+
+function isFreqMatch(got, exp, tolerance = 0.01) {
+  if (got === 0) return exp === 0;
+  const ratio = got / exp;
+  return Math.abs(ratio - Math.pow(2, Math.round(Math.log2(ratio)))) < tolerance;
+}
+
+const PROBLEMS = [
+  {
+    chapter: '［第一章］　逆転の鏡',
+    poem: 'テーブルの端に置かれたコップが午後の光を反射させている。\n巻き戻せない映画のフィルムのように、正しい過去へ向かう。',
+    task: '5文字の入力を反転させる。',
+    runs: 10,
+    genCase() {
+      const cs='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let s=''; for(let i=0;i<5;i++) s+=cs[Math.floor(Math.random()*cs.length)];
+      return { input:s+'\n', expected:s.split('').reverse().join('') };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第二章］　丸められた数字',
+    poem: '数字の殴り書きされた紙を丸めて捨てる。\nさて、丸くなった鉛筆の芯を眺めて何を思う？',
+    task: '入力された値のlog2の値を3桁の精度で求める。\n小数点は不要。',
+    runs: 10,
+    genCase() {
+      const x=Math.floor(Math.random()*9000)+1000;
+      return { input:x+'\n', expected:Math.round(Math.log2(x)*1000), x };
+    },
+    judge(got,expected){ const v=parseInt(got.trim(),10); return !isNaN(v) && Math.abs(v-expected)<=1; }
+  },
+  {
+    chapter: '［第三章］　触れられない数字',
+    poem: '時計の針が重なる直前の空白。\n誰にも触れられない数字は夜になる。',
+    task: '入力された値番目の素数を出力する。',
+    runs: 10,
+    genCase() {
+      const x=Math.floor(Math.random()*900)+100;
+      function nthPrime(n){ const p=[];let c=2; while(p.length<n){ let ok=true; for(const q of p){if(q*q>c)break;if(c%q===0){ok=false;break;}} if(ok)p.push(c);c++; } return p[n-1]; }
+      return { input:x+'\n', expected:String(nthPrime(x)) };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第四章］　繰り返しの剥奪',
+    poem: '既に読んだページをもう一度めくる。\n繰り返しには意味がない。',
+    task: '重複する文字を取り除く。',
+    runs: 10,
+    genCase() {
+      const al='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let s=''; for(let i=0;i<5;i++) s+=al[Math.floor(Math.random()*26)];
+      const freq={};
+      for(const c of s) freq[c]=(freq[c]||0)+1;
+      return { input:s+'\n', expected:[...s].filter(c=>freq[c]===1).join('') };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第五章］　あるかないかの二択',
+    poem: '電波の届かない高架下で信号の点滅を数える。\n世界はあるかないかの二択だった。',
+    task: '入力された文字列は二つの数で表す。',
+    runs: 10,
+    genCase() { const x=Math.floor(Math.random()*9000)+1000; return { input:x+'\n', expected:x.toString(2) }; },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第六章］　乱雑な列',
+    poem: '散らかった部屋に古びた本。\n背の低い順に並べても意味はない。',
+    task: '乱雑な列を整理する。',
+    runs: 10,
+    genCase() {
+      const arr=[1,2,3,4,5,6,7,8,9,10].sort(()=>Math.random()-0.5);
+      return { input:arr.join('\n')+'\n', expected:'1 2 3 4 5 6 7 8 9 10', arr };
+    },
+    judge(got,expected){ return got.trim()===expected; }
+  },
+  {
+    chapter: '［第七章］　振動する鍵盤',
+    poem: 'ピアノの鍵盤に指を置く。\n振動する。',
+    task: '入力がCならドの音を。',
+    runs: 1,
+    genCase() {
+      const notes=['C','D','E','F','G','A','B'];
+      const freqs={C:261.63,D:293.66,E:329.63,F:349.23,G:392.00,A:440.00,B:493.88};
+      const seq=notes.slice().sort(()=>Math.random()-0.5);
+      return { input:seq.join('')+'\n', expected:seq, freqs };
+    },
+    judge(got, expected, tc, soundLog) {
+      if (soundLog.length !== tc.expected.length) return false;
+      return tc.expected.every((n, i) => isFreqMatch(soundLog[i].freq, tc.freqs[n]));
+    }
+  },
+  {
+    chapter: '［第八章］　自己複製',
+    poem: '自己複製',
+    task: '',
+    runs: 1,
+    genCase(){ return { input:'', expected:'__QUINE__' }; },
+    judge(got,_,__,___,source){ return source.trim() !== '' && got.trim()===source.trim(); }
+  },
+  {
+    chapter: '［第九章］　分かたれた影',
+    poem: '光はいくつか影になる。\n大きいものにはやはり意味があった。',
+    task: '数値を分解して大きいものを見る。',
+    runs: 10,
+    genCase() {
+      const n = Math.floor(Math.random() * 90000) + 10000;
+      function maxPrimeFactor(x) { let max=1,num=x; for(let i=2;i*i<=num;i++){while(num%i===0){max=i;num/=i;}} return num>1?num:max; }
+      return { input: n + '\n', expected: String(maxPrimeFactor(n)) };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  },
+  {
+    chapter: '［第十章］　波の詳細',
+    poem: '波を見ていた。\n終わりがない波。',
+    task: '三角形の比を2桁の精度で求める。\n点は不要。',
+    runs: 10,
+    genCase() {
+      const deg = Math.floor(Math.random() * 180) + 1;
+      return { input: deg + '\n', expected: String(Math.round(Math.sin(deg * Math.PI / 180) * 100)) };
+    },
+    judge(got, expected) { const v=parseInt(got.trim(),10); return !isNaN(v) && Math.abs(v-parseInt(expected,10))<=2; }
+  },
+  {
+    chapter: '［第十一章］　ルート',
+    poem: '道のりは長かった。\nでも、これでもまだ道半ばだ。',
+    task: '面から辺に。',
+    runs: 10,
+    genCase() {
+      const n = Math.floor(Math.random() * 90000) + 10000;
+      return { input: n + '\n', expected: String(Math.round(Math.sqrt(n) * 1000)) };
+    },
+    judge(got, expected) { const v=parseInt(got.trim(),10); return !isNaN(v) && Math.abs(v-parseInt(expected,10))<=1; }
+  },
+  {
+    chapter: '［第十二章］　囲まれること',
+    poem: '海に囲まれた孤島がある。\n囲まれていることは正しいことである。',
+    task: '囲まれていることを評価する。',
+    runs: 10,
+    genCase() {
+      const len = 10;
+      const s = Math.random() < 0.5 ? generateBalancedParentheses(len)
+        : Array.from({length: len}, () => Math.random() < 0.5 ? '(' : ')').join('');
+      function isValid(str) { let bal=0; for(const ch of str){if(ch==='(')bal++;else{bal--;if(bal<0)return false;}} return bal===0; }
+      return { input: s + '\n', expected: isValid(s) ? '1' : '0' };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  },
+  {
+    chapter: '［第十三章］　分散和音',
+    poem: '久々に鍵盤に手を置いた。\n案外覚えているものだ。',
+    task: '小室進行を演奏する。',
+    runs: 1,
+    genCase() {
+      const notes = [
+        {name:'A',freq:220.00},{name:'C',freq:261.63},{name:'E',freq:329.63},
+        {name:'F',freq:349.23},{name:'A',freq:220.00},{name:'C',freq:261.63},
+        {name:'G',freq:392.00},{name:'B',freq:493.88},{name:'D',freq:293.66},
+        {name:'C',freq:261.63},{name:'E',freq:329.63},{name:'G',freq:392.00}
+      ];
+      return { input: '', expected: notes, ms: 200 };
+    },
+    judge(got, expected, tc, soundLog) {
+      if (soundLog.length !== tc.expected.length) return false;
+      return tc.expected.every((n, i) => isFreqMatch(soundLog[i].freq, n.freq));
+    }
+  },
+  {
+    chapter: '［第十四章］　計算機',
+    poem: '同じ作業は心がすり減る。\n簡単なことはわざわざやる意味もない。',
+    task: '計算する。',
+    runs: 10,
+    genCase() {
+      const ops=['+','-','*','/'];
+      const op1=ops[Math.floor(Math.random()*4)], op2=ops[Math.floor(Math.random()*4)];
+      const a=Math.floor(Math.random()*9)+1, b=Math.floor(Math.random()*9)+1, c=Math.floor(Math.random()*9)+1;
+      const expr=`${a}${op1}${b}${op2}${c}`;
+      return { input:expr+'\n', expected:String(Math.trunc(Function('"use strict";return('+expr+')')()))};
+    },
+    judge(got, expected) { const g=parseFloat(got.trim()),e=parseFloat(expected); return !isNaN(g)&&!isNaN(e)&&Math.abs(g-e)<1e-6; }
+  },
+  {
+    chapter: '［第十五章］　見方の違い',
+    poem: '同じ物でも見る方向で違うものになる。\n違いとは何だろうか。',
+    task: '変換作業',
+    runs: 10,
+    genCase() {
+      const map={0:6,1:5,2:1,3:4,4:0,5:8,6:3,7:9,8:2,9:7};
+      const num=Math.floor(Math.random()*10);
+      return { input:num+'\n', expected:String(map[num]) };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  },
+  {
+    chapter: '［第十六章］　自己分析',
+    poem: '自己を見つめる。\n\nどこにあるのか。',
+    task: '',
+    runs: 10,
+    genCase(source) {
+      if (!source.length) return { input:'a\n', expected:'1' };
+      const idx=Math.floor(Math.random()*source.length);
+      const ch=source[idx];
+      return { input:ch+'\n', expected:String(source.indexOf(ch)+1) };
+    },
+    judge(got, expected) { return got.trim() === expected; }
+  }
+];
+
+const SAMPLES = [
+  {
+    name: '01_math', stdin: '',
+    code: `a = 12\nb = 5\n\nc = a + b\nd = a * b\ne = a / b\nf = a % b\n\nout.num(c)\nout.chr(32)\nout.num(d)\nout.chr(32)\nout.num(e)\nout.chr(32)\nout.num(f)\nout.chr(10)`
+  },
+  {
+    name: '02_control', stdin: '',
+    code: `a = 0\nloop 5 {\n    a = a + 2\n}\nout.num(a)\nout.chr(10)\n\ni = 10\nwhile i > 0 {\n    if i % 2 == 0 {\n        out.num(i)\n        out.chr(32)\n    }\n    i = i - 1\n}\nout.chr(10)`
+  },
+  {
+    name: '03_string', stdin: 'hello',
+    code: `s = in.str()\nn = len(s)\n\nout.num(n)\nout.chr(10)\n\ni = 0\nwhile i < n {\n    c = s[i]\n    out.chr(c)\n    out.chr(10)\n    i = i + 1\n}`
+  },
+  {
+    name: '04_numbers', stdin: '3\n10\n20\n30',
+    code: `n = in.num()\ns = 0\n\nloop n {\n    v = in.num()\n    s = s + v\n}\n\nout.num(s)\nout.chr(10)`
+  },
+  {
+    name: '05_system', stdin: '',
+    code: `c = self()\nn = len(c)\n\nout.num(n)\nout.chr(10)\n\nsound(440, 200)\nsound(880, 200)`
+  }
+];
+
+// =============================================
+//  AUDIO (BGM/SE)
+// =============================================
+const bgmFiles = ['bgm/bgm1.mp3', 'bgm/bgm2.mp3', 'bgm/bgm3.mp3'];
+
+function getRandomBgm() {
+  return bgmFiles[Math.floor(Math.random() * bgmFiles.length)];
+}
+
+let bgmAudio = null;
+let seVolume = 0.8;
+let bgmStarted = false;
+
+function createBgm() {
+  if (bgmAudio) {
+    bgmAudio.pause();
+    bgmAudio.src = '';
+    bgmAudio = null;
+  }
+  bgmAudio = new Audio(getRandomBgm());
+  bgmAudio.loop = false;
+  bgmAudio.volume = parseFloat(localStorage.getItem('lv00_vol_bgm') ?? '50') / 100;
+  bgmAudio.addEventListener('ended', () => {
+    bgmAudio.src = getRandomBgm();
+    bgmAudio.play().catch(() => {});
+  });
+  return bgmAudio;
+}
+
+function startBgm() {
+  if (!bgmStarted) {
+    bgmStarted = true;
+    createBgm();
+    setTimeout(() => {
+      bgmAudio.play().catch(() => {});
+    }, 1000);
+  }
+}
+
+function onFirstInteraction() {
+  startBgm();
+  document.removeEventListener('click', onFirstInteraction);
+  document.removeEventListener('keydown', onFirstInteraction);
+}
+document.addEventListener('click', onFirstInteraction);
+document.addEventListener('keydown', onFirstInteraction);
+
+function playSe(file = 'se/se_select.mp3') {
+  const audio = new Audio(file);
+  audio.volume = seVolume;
+  audio.play().catch(()=>{});
+}
+
+// =============================================
+//  UI
+// =============================================
+let currentScreen = 'menu';
+let menuIdx = 0, readPage = 0, solveIdx = 0, sampleIdx = 0;
+let selectMode = 'read';
+let readReturnTo = 'menu';
+
+// --- 実行中フラグ＆キャンセル ---
+let isRunning = false;
+let cancelRun = false;
+
+function showScreen(name) {
+  if (isRunning) return;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  currentScreen = name;
+}
+
+// ── MENU ──────────────────────────────────────
+const menuItems = document.querySelectorAll('.menu-item');
+function renderMenu() {
+  menuItems.forEach((el,i) => {
+    const sel = i === menuIdx;
+    el.classList.toggle('selected', sel);
+    el.textContent = (sel ? '> ' : '  ') + t().menu[i];
+  });
+}
+
+menuItems.forEach((el,i)=>{
+  el.addEventListener('mouseenter', ()=>{ if(menuIdx!==i){ menuIdx=i; renderMenu(); } });
+  el.addEventListener('click', ()=>{
+    if (isRunning) return;
+    if(menuIdx!==i){ menuIdx=i; renderMenu(); }
+    playSe('se/se_select.mp3');
+    menuActivate();
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (isRunning) return;
+  if (document.getElementById('dialog-overlay').classList.contains('active')) return;
+
+  if (currentScreen === 'menu') {
+    if (e.key==='ArrowDown'||e.key==='j'){ menuIdx=(menuIdx+1)%6; renderMenu(); playSe('se/se_move.mp3'); }
+    else if (e.key==='ArrowUp'||e.key==='k'){ menuIdx=(menuIdx+5)%6; renderMenu(); playSe('se/se_move.mp3'); }
+    else if (e.key==='Enter'){ playSe('se/se_select.mp3'); menuActivate(); }
+  }
+  else if (currentScreen === 'read') {
+    if (e.key==='ArrowRight'||e.key==='l') nextPage();
+    else if (e.key==='ArrowLeft'||e.key==='h') prevPage();
+    else if (e.key==='Escape') handleReadBack();
+  }
+  else if (currentScreen === 'select') {
+    // select画面のキーボードナビゲーション
+    const listItems = document.querySelectorAll('#select-list > div');
+    const currentIdx = selectMode === 'read' ? readPage : solveIdx;
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      e.preventDefault();
+      const newIdx = Math.min(currentIdx + 1, listItems.length - 1);
+      if (selectMode === 'read') readPage = newIdx; else solveIdx = newIdx;
+      updateSelectItems();
+      playSe('se/se_move.mp3');
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      e.preventDefault();
+      const newIdx = Math.max(currentIdx - 1, 0);
+      if (selectMode === 'read') readPage = newIdx; else solveIdx = newIdx;
+      updateSelectItems();
+      playSe('se/se_move.mp3');
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      // 現在選択中の項目をクリック
+      const targetIdx = selectMode === 'read' ? readPage : solveIdx;
+      const targetEl = listItems[targetIdx];
+      if (targetEl) targetEl.click();
+    }
+  }
+});
+
+function menuActivate() {
+  if (isRunning) return;
+  const actions = [
+    ()=>{ selectMode='read';  renderSelect(); showScreen('select'); },
+    ()=>{ selectMode='solve'; renderSelect(); showScreen('select'); },
+    ()=>{ sampleIdx=0; renderSamples(); showScreen('samples'); },
+    ()=>{ showScreen('lab'); },
+    ()=>{ renderStats(); showScreen('stats'); },
+    ()=>{ showScreen('settings'); },
+  ];
+  actions[menuIdx]?.();
+}
+
+// ── CLEAR STATE ──────────────────────────────
+const CLEAR_KEY = 'lv00_cleared', CODE_KEY = 'lv00_cleared_code', WELCOME_KEY = 'lv00_welcome_shown';
+const STATS_KEY = 'lv00_stats';
+
+function lsGet(key, def) { try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch(e) { return def; } }
+function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function loadCleared()  { return lsGet(CLEAR_KEY, []); }
+function markCleared(idx){ const a=loadCleared(); if(!a.includes(idx)){ a.push(idx); lsSet(CLEAR_KEY,a); } }
+function isCleared(idx)  { return loadCleared().includes(idx); }
+
+function getClearedCode(idx) { return lsGet(CODE_KEY, {})[idx] || ''; }
+function setClearedCode(idx, code){ const o=lsGet(CODE_KEY,{}); o[idx]=code; lsSet(CODE_KEY,o); }
+
+function loadStats() { return lsGet(STATS_KEY, {}); }
+function updateStats(idx, code) {
+  const stats=loadStats(), lines=code.split('\n').length, chars=code.length;
+  stats[idx] = stats[idx]
+    ? { minLines: Math.min(stats[idx].minLines, lines), minChars: Math.min(stats[idx].minChars, chars) }
+    : { minLines: lines, minChars: chars };
+  lsSet(STATS_KEY, stats);
+}
+
+function renderStats() {
+  if (isRunning) return;
+  const tbody=document.getElementById('stats-body');
+  tbody.innerHTML='';
+  const cleared=loadCleared(), stats=loadStats();
+  let totalCleared=0;
+  PROBLEMS.forEach((p,i)=>{
+    const isClr=cleared.includes(i);
+    if(isClr) totalCleared++;
+    const s=stats[i]||{minLines:'-',minChars:'-'};
+    tbody.insertAdjacentHTML('beforeend',`<tr><td>${i+1}</td><td>${isClr?t().cleared:t().notCleared}</td><td>${s.minLines}</td><td>${s.minChars}</td></tr>`);
+  });
+  document.getElementById('stats-summary').textContent = t().statsSummary(totalCleared, PROBLEMS.length);
+}
+
+// ── DIALOG ──────────────────────────────────
+let dialogResolve = null;
+function showDialog(message, type) {
+  return new Promise(resolve => {
+    document.getElementById('dialog-message').textContent = message;
+    document.getElementById('dialog-cancel').classList.toggle('hidden', type === 'ok');
+    document.getElementById('dialog-overlay').classList.add('active');
+    dialogResolve = resolve;
+  });
+}
+document.getElementById('dialog-confirm').addEventListener('click', () => {
+  document.getElementById('dialog-overlay').classList.remove('active');
+  if (dialogResolve) { dialogResolve(true); dialogResolve=null; }
+  playSe('se/se_confirm.mp3');
+});
+document.getElementById('dialog-cancel').addEventListener('click', () => {
+  document.getElementById('dialog-overlay').classList.remove('active');
+  if (dialogResolve) { dialogResolve(false); dialogResolve=null; }
+  playSe('se/se_cancel.mp3');
+});
+
+function showWelcomeIfNeeded() {
+  if (!localStorage.getItem(WELCOME_KEY))
+    showDialog(t().welcomeMsg, 'ok').then(()=>localStorage.setItem(WELCOME_KEY,'true'));
+}
+
+function deleteAllSaveData() {
+  if (isRunning) return;
+  showDialog(t().deleteConfirm, 'confirm').then(confirmed => {
+    if (confirmed) {
+      [CLEAR_KEY, CODE_KEY, STATS_KEY, WELCOME_KEY].forEach(k=>localStorage.removeItem(k));
+      location.reload();
+    }
+  });
+}
+
+function chapterLabel(i){ return (isCleared(i)?'✓ ':'  ')+PROBLEMS[i].chapter; }
+
+// ── SELECT ──────────────────────────────────
+function renderSelect(){
+  if (isRunning) return;
+  document.getElementById('select-title').textContent = selectMode==='read' ? t().selectTitleRead : t().selectTitleSolve;
+  const list=document.getElementById('select-list');
+  list.innerHTML='';
+  PROBLEMS.forEach((_,i)=>{
+    const el=document.createElement('div');
+    el.textContent=chapterLabel(i);
+    el.addEventListener('mouseenter',()=>{
+      if (isRunning) return;
+      const changed = selectMode==='read' ? readPage!==i : solveIdx!==i;
+      if(changed){ if(selectMode==='read') readPage=i; else solveIdx=i; updateSelectItems(); }
+    });
+    el.addEventListener('click',()=>{
+      if (isRunning) return;
+      playSe('se/se_select.mp3');
+      if(selectMode==='read'){ readPage=i; readReturnTo='select'; renderReadPage(); showScreen('read'); }
+      else { solveIdx=i; renderSolve(); showScreen('solve'); }
+    });
+    list.appendChild(el);
+  });
+  updateSelectItems();
+}
+
+function updateSelectItems() {
+  const activeIdx = selectMode==='read' ? readPage : solveIdx;
+  document.querySelectorAll('#select-list > div').forEach((el,i)=>{
+    el.textContent=(i===activeIdx?'> ':'  ')+PROBLEMS[i].chapter;
+  });
+}
+
+document.getElementById('select-back').addEventListener('click', goMenu);
+
+// ── READ ────────────────────────────────────
+function renderReadPage(){
+  const p=PROBLEMS[readPage];
+  document.getElementById('read-page-num').textContent=`${readPage+1} / ${PROBLEMS.length}`;
+  document.getElementById('read-chapter').textContent=(isCleared(readPage)?'✓ ':'')+p.chapter;
+  document.getElementById('read-poem').textContent=p.poem;
+  document.getElementById('read-task').textContent=p.task;
+}
+function nextPage(){ if (isRunning) return; if(readPage<PROBLEMS.length-1){ readPage++; renderReadPage(); } }
+function prevPage(){ if (isRunning) return; if(readPage>0){ readPage--; renderReadPage(); } }
+
+function handleReadBack() {
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  if(readReturnTo==='solve'){ readReturnTo='menu'; renderSolve(); showScreen('solve'); }
+  else if(readReturnTo==='select'){ readReturnTo='menu'; renderSelect(); showScreen('select'); }
+  else { showScreen('menu'); renderMenu(); }
+}
+
+document.getElementById('read-next').addEventListener('click',()=>{ if (isRunning) return; playSe('se/se_move.mp3'); nextPage(); });
+document.getElementById('read-prev').addEventListener('click',()=>{ if (isRunning) return; playSe('se/se_move.mp3'); prevPage(); });
+document.getElementById('read-back').addEventListener('click', handleReadBack);
+document.getElementById('read-solve').addEventListener('click',()=>{
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  solveIdx=readPage;
+  readReturnTo='solve';
+  renderSolve();
+  showScreen('solve');
+});
+
+// ── SOLVE ───────────────────────────────────
+function updateLineNums(numbersId, srcId, isElement=false) {
+  const src = document.getElementById(srcId);
+  const text = isElement ? src.textContent : src.value;
+  document.getElementById(numbersId).textContent =
+    Array.from({length: text.split('\n').length}, (_,i) => i+1).join('\n') + '\n';
+}
+
+function renderSolve(){
+  if (isRunning) return;
+  document.getElementById('code-input').value = getClearedCode(solveIdx) || '';
+  document.getElementById('log-area').textContent = '';
+  document.getElementById('log-back').style.display = 'none';
+  updateLineNums('line-numbers', 'code-input');
+}
+
+document.getElementById('solve-back').addEventListener('click',()=>{
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  renderSelect();
+  showScreen('select');
+});
+document.getElementById('solve-read-btn').addEventListener('click',()=>{
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  readPage=solveIdx;
+  readReturnTo='solve';
+  renderReadPage();
+  showScreen('read');
+});
+
+// --- 実行ボタン（課題） ---
+document.getElementById('run-btn').addEventListener('click', function() {
+  if (isRunning) {
+    cancelRun = true;
+    isRunning = false;
+    this.textContent = t().run;
+    cancelAllSounds();
+    return;
+  }
+  playSe('se/se_select.mp3');
+  runProblem();
+});
+
+async function runProblem() {
+  if (isRunning) return;
+  isRunning = true;
+  cancelRun = false;
+  const runBtn = document.getElementById('run-btn');
+  runBtn.textContent = t().stop;
+  const source=document.getElementById('code-input').value;
+  const logArea=document.getElementById('log-area');
+  const logBack=document.getElementById('log-back');
+  logArea.textContent='';
+  logBack.style.display='none';
+  const prob=PROBLEMS[solveIdx];
+  const log=line=>{ logArea.textContent+=line+'\n'; logArea.scrollTop = logArea.scrollHeight; };
+
+  try {
+    for(let i=0;i<prob.runs;i++){
+      if (cancelRun) { log('> CANCELLED'); break; }
+      const tc=prob.genCase(source);
+      const r=runCode(source, tc.input);
+      if (cancelRun) { log('> CANCELLED'); break; }
+      if(!r.ok){ 
+        log(`> ${String(i+1).padStart(2,'0')}: ${r.error}`);
+        if (r.error !== 'CANCELLED') playSe('se/se_cancel.mp3');
+        break;
+      }
+      
+      const pass = prob.judge(r.stdout, tc.expected, tc, r.soundLog, source);
+      
+      log(`> ${String(i+1).padStart(2,'0')}:`);
+
+      if (r.stdout.trim()) {
+        log(`  out: ${JSON.stringify(r.stdout.trim())}`);
+      }
+
+      await playSounds(r.soundLog, (sound, idx, total) => {
+        log(`  sound(${sound.freq}, ${sound.ms})`);
+      });
+
+      if (cancelRun) { log('> CANCELLED'); break; }
+
+      if(pass){
+        log('  PASS');
+      } else {
+        log('  FAIL');
+        let inDisp=tc.input.trim();
+        if(solveIdx===5) inDisp='['+tc.arr.join(', ')+']';
+        log(`  IN  : ${JSON.stringify(inDisp)}`);
+        if(solveIdx===6||solveIdx===12){
+          log(`  WANT: sound() x${tc.expected.length} (correct frequencies)`);
+          log(`  GOT : sound() x${r.soundLog.length}`);
+        } else {
+          log(`  WANT: ${JSON.stringify(Array.isArray(tc.expected)?tc.expected.join(''):String(tc.expected))}`);
+          log(`  GOT : ${JSON.stringify(r.stdout.trim())}`);
+        }
+        playSe('se/se_cancel.mp3');
+        break;
+      }
+      if(i===prob.runs-1){
+        log('> SUCCESS');
+        markCleared(solveIdx); setClearedCode(solveIdx, source);
+        updateStats(solveIdx, source);
+        logBack.style.display='block';
+        renderSelect();
+        renderStats();
+        playSe('se/se_confirm.mp3');
+      }
+      await new Promise(res=>setTimeout(res,0));
+      if (cancelRun) { log('> CANCELLED'); break; }
+    }
+  } finally {
+    isRunning = false;
+    runBtn.textContent = t().run;
+    if (cancelRun) cancelAllSounds();
+    cancelRun = false;
+  }
+}
+
+// メニューに戻る共通処理
+function goMenu() {
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  showScreen('menu');
+  renderMenu();
+}
+
+document.getElementById('log-back').addEventListener('click', goMenu);
+
+// ── LAB ─────────────────────────────────────
+document.getElementById('lab-back').addEventListener('click', goMenu);
+
+// --- インポート / エクスポート ---
+document.getElementById('lab-import').addEventListener('click', () => {
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.txt,.lv00';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const code = ev.target.result;
+      document.getElementById('lab-code-input').value = code;
+      updateLineNums('lab-line-numbers', 'lab-code-input');
+      playSe('se/se_confirm.mp3');
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+  input.click();
+});
+
+document.getElementById('lab-export').addEventListener('click', () => {
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  const code = document.getElementById('lab-code-input').value;
+  const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `lab_${new Date().toISOString().slice(0,10)}.lv00`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// --- 実行ボタン（実験） ---
+document.getElementById('lab-run-btn').addEventListener('click', function() {
+  if (isRunning) {
+    cancelRun = true;
+    isRunning = false;
+    this.textContent = t().run;
+    cancelAllSounds();
+    return;
+  }
+  playSe('se/se_select.mp3');
+  runLabCode();
+});
+
+// stdout・sound出力をログに書き出す共通処理
+async function logRunResult(r, log) {
+  if (r.stdout.trim()) log(r.stdout.trim());
+  await playSounds(r.soundLog, (sound) => log(`sound(${sound.freq}, ${sound.ms})`));
+  if (!r.stdout.trim() && r.soundLog.length === 0) log('(no output)');
+}
+
+async function runLabCode() {
+  if (isRunning) return;
+  isRunning = true;
+  cancelRun = false;
+  const runBtn = document.getElementById('lab-run-btn');
+  runBtn.textContent = t().stop;
+  const source=document.getElementById('lab-code-input').value;
+  const logArea=document.getElementById('lab-log-area');
+  logArea.textContent='';
+  const log=line=>{ logArea.textContent+=line+'\n'; logArea.scrollTop = logArea.scrollHeight; };
+
+  try {
+    const r=runCode(source,'');
+    if (cancelRun) { log('CANCELLED'); return; }
+    if(!r.ok){ log(r.error); if (r.error !== 'CANCELLED') playSe('se/se_cancel.mp3'); return; }
+
+    await logRunResult(r, log);
+
+    if (!cancelRun) playSe('se/se_confirm.mp3');
+  } finally {
+    isRunning = false;
+    runBtn.textContent = t().run;
+    if (cancelRun) cancelAllSounds();
+    cancelRun = false;
+  }
+}
+
+// ── SAMPLES ─────────────────────────────────
+function renderSamples(){
+  if (isRunning) return;
+  const tabsEl=document.getElementById('sample-tabs');
+  tabsEl.innerHTML='';
+  SAMPLES.forEach((s,i)=>{
+    const el=document.createElement('span');
+    el.className='sample-tab'+(i===sampleIdx?' selected':'');
+    el.textContent=s.name;
+    el.addEventListener('click',()=>{
+      if (isRunning) return;
+      playSe('se/se_select.mp3');
+      sampleIdx=i;
+      renderSamples();
+    });
+    tabsEl.appendChild(el);
+  });
+  document.getElementById('sample-code-display').textContent=SAMPLES[sampleIdx].code;
+  document.getElementById('sample-log').textContent='';
+  updateLineNums('sample-line-numbers', 'sample-code-display', true);
+}
+
+document.getElementById('samples-back').addEventListener('click', goMenu);
+document.getElementById('sample-run-btn').addEventListener('click', async function() {
+  if (isRunning) return;
+  playSe('se/se_select.mp3');
+  
+  const s=SAMPLES[sampleIdx];
+  const r=runCode(s.code,s.stdin);
+  const logEl=document.getElementById('sample-log');
+  logEl.textContent='';
+  const log=line=>{ logEl.textContent+=line+'\n'; logEl.scrollTop = logEl.scrollHeight; };
+
+  if(!r.ok){ log(r.error); playSe('se/se_cancel.mp3'); return; }
+
+  await logRunResult(r, log);
+
+  if (!cancelRun) playSe('se/se_confirm.mp3');
+});
+
+// ── STATS / SETTINGS BACK ──────────────────
+document.getElementById('stats-back').addEventListener('click', goMenu);
+document.getElementById('settings-back').addEventListener('click', goMenu);
+document.getElementById('delete-save-btn').addEventListener('click', deleteAllSaveData);
+
+document.getElementById('fullscreen-btn').addEventListener('click', () => {
+  if (isRunning) return;
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen?.();
+});
+
+// ── VOLUME ──────────────────────────────────
+const volBgmSlider=document.getElementById('vol-bgm'), volBgmVal=document.getElementById('vol-bgm-val');
+const volSeSlider =document.getElementById('vol-se'),  volSeVal =document.getElementById('vol-se-val');
+
+function saveVolumeSettings() {
+  localStorage.setItem('lv00_vol_bgm', volBgmSlider.value);
+  localStorage.setItem('lv00_vol_se',  volSeSlider.value);
+}
+function loadVolumeSettings() {
+  const bgmVal = parseInt(localStorage.getItem('lv00_vol_bgm') ?? '50', 10);
+  const seVal  = parseInt(localStorage.getItem('lv00_vol_se')  ?? '80', 10);
+  volBgmSlider.value=bgmVal; volBgmVal.textContent=bgmVal;
+  if (bgmAudio) bgmAudio.volume = bgmVal / 100;
+  volSeSlider.value=seVal;   volSeVal.textContent=seVal;   seVolume=seVal/100;
+}
+
+volBgmSlider.addEventListener('input', ()=>{
+  const v=volBgmSlider.value; volBgmVal.textContent=v;
+  if (bgmAudio) bgmAudio.volume = v / 100;
+  saveVolumeSettings();
+});
+volSeSlider.addEventListener('input',  ()=>{ const v=volSeSlider.value;  volSeVal.textContent=v;  seVolume=v/100; saveVolumeSettings(); });
+volSeSlider.addEventListener('change', ()=>playSe('se/se_select.mp3'));
+
+loadVolumeSettings();
+
+// ── INIT ────────────────────────────────────
+applyLang();
+renderMenu();
+showWelcomeIfNeeded();
+
+document.querySelectorAll('.code-input').forEach(el=>{
+  el.addEventListener('keydown', function(e){
+    if(e.key==='Tab'){
+      e.preventDefault();
+      const s=this.selectionStart, en=this.selectionEnd;
+      this.value=this.value.substring(0,s)+'    '+this.value.substring(en);
+      this.selectionStart=this.selectionEnd=s+4;
+    }
+  });
+});
+
+// スクロール同期 & 行番号初期化
+document.addEventListener('DOMContentLoaded', () => {
+  [
+    { ta: 'code-input',     ln: 'line-numbers',        id: 'code-input' },
+    { ta: 'lab-code-input', ln: 'lab-line-numbers',    id: 'lab-code-input' },
+  ].forEach(({ ta, ln, id }) => {
+    const textarea=document.getElementById(ta), lineNumbers=document.getElementById(ln);
+    if(textarea && lineNumbers){
+      textarea.addEventListener('scroll', ()=>{ lineNumbers.scrollTop=textarea.scrollTop; });
+      textarea.addEventListener('input',  ()=>updateLineNums(ln, id));
+    }
+  });
+
+  const sampleCode=document.getElementById('sample-code-display');
+  const sampleNums=document.getElementById('sample-line-numbers');
+  sampleCode?.parentElement?.addEventListener('scroll', function(){ if(sampleNums) sampleNums.scrollTop=this.scrollTop; });
+
+  setTimeout(()=>{
+    updateLineNums('line-numbers',     'code-input');
+    updateLineNums('lab-line-numbers', 'lab-code-input');
+    updateLineNums('sample-line-numbers', 'sample-code-display', true);
+  }, 50);
+});
+</script>
+</body>
+</html>
