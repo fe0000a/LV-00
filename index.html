@@ -1291,8 +1291,8 @@ function startBgm() {
   if (!bgmStarted) {
     bgmStarted = true;
     createBgm();
-    setTimeout(() => {
-      bgmAudio.play().catch(() => {});
+    bgmAudio.play().catch(e => {
+      console.warn("BGM再生がブラウザにブロックされました:", e);
     });
   }
 }
