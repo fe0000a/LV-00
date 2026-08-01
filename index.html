@@ -1283,9 +1283,9 @@ const PROBLEMS = [
     task: '',
     runs: 10,
     genCase(source) {
-      if (!source.length) return { input:'a\n', expected:'1' };
-      const idx=Math.floor(Math.random()*source.length);
-      const ch=source[idx];
+      const filtered = [...source].map((c, i) => ({ c, i })).filter(({ c }) => c !== '\n' && c !== '\r' && c !== ' ' && c !== '\t');
+      if (!filtered.length) return { input:'a\n', expected:'1' };
+      const { c: ch, i: idx } = filtered[Math.floor(Math.random() * filtered.length)];
       return { input:ch+'\n', expected:String(source.indexOf(ch)+1) };
     },
     judge(got, expected) { return got.trim() === expected; }
